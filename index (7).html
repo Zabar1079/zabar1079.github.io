@@ -1,0 +1,1636 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIPPON SHIPMENT TRACKING</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --navy:#0b2a5b; --navy-2:#123a78; --blue:#1565c0; --blue-2:#1e88e5; --sky:#e8f2fc; --sky-2:#f4f9fe;
+  --green:#2e9e4f; --green-soft:#e3f4e8; --amber:#e08a00; --amber-soft:#fff3dc; --red:#d32f2f; --red-soft:#fde8e8;
+  --slate:#5b6b82; --slate-soft:#eef1f6; --line:#d8e3f0; --ink:#13233d; --muted:#5f6f86; --white:#fff;
+  --radius:14px; --shadow:0 2px 10px rgba(11,42,91,.07);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"IBM Plex Sans Thai",system-ui,sans-serif;font-size:17px;line-height:1.55;color:var(--ink);background:var(--sky-2)}
+button,input,select{font:inherit}
+.hidden{display:none!important}
+
+/* ---------- buttons & inputs ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:10px;border:1px solid transparent;font-weight:600;cursor:pointer;transition:.15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#0f56a8}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--navy)}
+.btn-ghost:hover{background:var(--sky)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn-sm{min-height:38px;padding:0 14px;font-size:15px}
+label.field{display:block;margin-bottom:16px}
+label.field span{display:block;font-weight:600;margin-bottom:6px;color:var(--navy)}
+input.inp,select.inp{width:100%;min-height:48px;padding:0 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input.inp:focus,select.inp:focus{outline:none;border-color:var(--blue-2);box-shadow:0 0 0 3px rgba(30,136,229,.15)}
+.err{background:var(--red-soft);color:var(--red);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:500}
+.ok{background:var(--green-soft);color:#1d6e36;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:500}
+
+/* ---------- login ---------- */
+.login-wrap{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.login-hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#cfe6fb 0%,#eaf4fd 55%,#fff 100%);display:flex;flex-direction:column;justify-content:space-between;padding:48px}
+.login-hero h1{font-size:40px;line-height:1.15;margin:0;color:var(--navy);letter-spacing:.5px}
+.login-hero h1 small{display:block;font-size:20px;font-weight:500;color:var(--blue);letter-spacing:0;margin-top:10px}
+.login-hero .tag{display:inline-block;margin-top:18px;font-weight:600;color:var(--navy);border-bottom:3px solid var(--green);padding-bottom:2px}
+.hero-art{width:100%;max-width:560px;align-self:center}
+.login-side{display:flex;align-items:center;justify-content:center;padding:32px;background:#fff}
+.login-card{width:100%;max-width:420px}
+.login-card h2{margin:0 0 6px;color:var(--navy);font-size:28px}
+.login-card p.sub{margin:0 0 22px;color:var(--muted)}
+.tabs{display:flex;background:var(--sky);border-radius:12px;padding:4px;margin-bottom:22px}
+.tabs button{flex:1;border:0;background:transparent;min-height:44px;border-radius:9px;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs button.on{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
+.credit{color:var(--muted);font-size:14px;margin-top:22px;text-align:center}
+.credit b{color:var(--navy)}
+
+/* ---------- pending ---------- */
+.center-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,#e3f0fc,#f8fbff)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pending{max-width:480px;padding:36px;text-align:center}
+.pending .ico{width:72px;height:72px;border-radius:50%;background:var(--amber-soft);color:var(--amber);display:grid;place-items:center;margin:0 auto 16px}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:272px 1fr;min-height:100vh}
+.side{background:var(--navy);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:12px;padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.brand-mark{width:44px;height:44px;border-radius:11px;background:#fff;display:grid;place-items:center;flex:none}
+.brand-txt{line-height:1.15}
+.brand-txt b{display:block;font-size:17px;letter-spacing:.6px}
+.brand-txt small{font-size:12.5px;color:#a9c4ea;letter-spacing:1.2px}
+.nav{flex:1;overflow:auto;padding:14px 12px}
+.nav a{display:flex;align-items:center;gap:12px;white-space:nowrap;color:#d6e4f7;text-decoration:none;padding:11px 14px;border-radius:10px;margin-bottom:3px;font-weight:500}
+.nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav a.on{background:var(--blue);color:#fff}
+.nav a svg{flex:none}
+.nav a .soon{margin-left:auto;font-size:11px;flex:none;background:rgba(255,255,255,.14);padding:1px 7px;border-radius:20px;color:#cfe0f7}
+.nav .sep{height:1px;background:rgba(255,255,255,.1);margin:10px 6px}
+.me{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+.avatar{width:40px;height:40px;border-radius:50%;background:#2c5aa0;display:grid;place-items:center;font-weight:700;flex:none}
+.me div{min-width:0;line-height:1.3}
+.me b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me small{color:#a9c4ea;font-size:13px}
+.side-credit{padding:10px 18px 16px;font-size:12px;color:#8fa9cf}
+.main{min-width:0}
+.topbar{display:none}
+.page{padding:28px 32px 48px;max-width:1400px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.page-head h1{margin:0;font-size:30px;color:var(--navy)}
+.page-head .sub{color:var(--muted);margin-top:2px}
+
+/* ---------- dashboard ---------- */
+.banner{position:relative;border-radius:var(--radius);overflow:hidden;background:linear-gradient(115deg,var(--navy) 0%,#1d5bb0 60%,#4aa3ea 100%);color:#fff;padding:22px 26px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.banner h2{margin:0;font-size:24px}
+.banner p{margin:4px 0 0;color:#d4e6fb}
+.banner svg{flex:none;opacity:.95}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:30px;min-height:40px;padding:0 16px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:22px}
+.stat{padding:16px 16px 14px;border-radius:var(--radius);background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);border-top:5px solid var(--c)}
+.stat .lbl{font-size:14.5px;font-weight:600;color:var(--muted)}
+.stat .num{font-size:36px;font-weight:700;color:var(--c);line-height:1.15;margin-top:4px}
+.stat .th{font-size:13.5px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+.panel{padding:20px 22px}
+.panel h3{margin:0 0 14px;font-size:19px;color:var(--navy);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wh-row{display:grid;grid-template-columns:130px 1fr 64px;align-items:center;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.wh-row:last-child{border-bottom:0}
+.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--slate-soft)}
+.bar i{display:block;height:100%}
+.wh-total{font-size:22px;font-weight:700;text-align:right;color:var(--navy)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:14px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--c);margin-right:6px;vertical-align:-1px}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--sky)}
+.list li:last-child{border-bottom:0}
+.list .t{font-size:13.5px;color:var(--muted);white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c);margin-top:9px;flex:none}
+.empty{color:var(--muted);text-align:center;padding:26px 10px}
+
+/* ---------- badges ---------- */
+.badge{display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:30px;font-size:14px;font-weight:700;letter-spacing:.3px;background:var(--bg);color:var(--c);white-space:nowrap}
+.s-WAITING{--c:var(--slate);--bg:var(--slate-soft)}
+.s-ARRIVED{--c:var(--blue);--bg:var(--sky)}
+.s-LOADING{--c:var(--amber);--bg:var(--amber-soft)}
+.s-DEPARTED{--c:var(--green);--bg:var(--green-soft)}
+.s-ISSUE{--c:var(--red);--bg:var(--red-soft)}
+.w-DAC{--c:#fff;--bg:var(--blue)}
+.w-BLC{--c:#fff;--bg:var(--green)}
+.w-UNASSIGNED{--c:var(--slate);--bg:var(--slate-soft)}
+.w-PENDING{--c:var(--amber);--bg:var(--amber-soft)}
+
+/* ---------- tables ---------- */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:14.5px;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:2px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px;border-bottom:1px solid var(--sky);vertical-align:middle;overflow-wrap:anywhere}
+.tbl tr.pend td{background:#fffaf0}
+.tbl .inp{min-height:42px}
+.tbl select.inp{min-width:140px}
+.tbl input.inp{min-width:130px}
+.tbl-wrap{overflow-x:auto}
+
+/* ---------- misc ---------- */
+.soon-card{padding:44px 28px;text-align:center;max-width:640px}
+.soon-card h2{color:var(--navy);margin:10px 0 6px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:99;font-weight:500;max-width:90vw}
+.toast.bad{background:var(--red)}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--green);font-weight:600}
+.live::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+
+/* ---------- responsive ---------- */
+@media (max-width:1250px){.stats{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:980px){
+  .login-wrap{grid-template-columns:1fr}
+  .login-hero{padding:28px 22px 10px}
+  .login-hero h1{font-size:28px}
+  .hero-art{max-width:420px}
+  .shell{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;bottom:0;width:286px;z-index:50;transform:translateX(-100%);transition:transform .2s}
+  .side.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+  .topbar{display:flex;align-items:center;gap:12px;background:var(--navy);color:#fff;padding:10px 14px;position:sticky;top:0;z-index:40}
+  .topbar button{background:transparent;border:0;color:#fff;width:44px;height:44px;display:grid;place-items:center;cursor:pointer}
+  .topbar b{font-size:16px;letter-spacing:.5px}
+  .page{padding:18px 16px 40px}
+  .page-head h1{font-size:25px}
+  .grid2{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat .num{font-size:30px}
+  .banner svg{display:none}
+  .wh-row{grid-template-columns:96px 1fr 48px}
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;padding:6px 4px;background:#fff}
+  .tbl td{border:0;padding:6px 10px}
+  .tbl td[data-l]::before{content:attr(data-l);display:block;font-size:13px;color:var(--muted);font-weight:600}
+}
+
+/* =================== work pages =================== */
+.k{font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);display:block}
+.small-muted{font-size:14px;color:var(--muted)}
+.muted-line{color:var(--muted);margin:4px 0 12px}
+.controls{padding:16px;display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.controls .chips{align-items:center}
+.chips .lab{font-size:13.5px;font-weight:700;color:var(--muted);min-width:70px}
+.inp.big{min-height:56px;font-size:19px}
+textarea.inp{padding:10px 14px;min-height:70px;resize:vertical}
+.empty-big{padding:40px 24px;text-align:center}
+.empty-big h2{color:var(--navy);margin:0 0 6px}
+.empty-big p{color:var(--muted);margin:0 0 16px}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.warn{background:var(--amber-soft);color:#8a5600;border-radius:10px;padding:10px 14px;margin:10px 0;font-weight:500}
+
+/* board */
+.flight{margin-bottom:16px;overflow:hidden}
+.fhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px;background:var(--sky);border-bottom:1px solid var(--line)}
+.ftag{font-size:11.5px;font-weight:700;letter-spacing:.14em;color:var(--muted)}
+.fcode{font-size:22px;font-weight:700;color:var(--navy);letter-spacing:.04em}
+.fetd{font-weight:600;color:var(--blue)}
+.fdest{font-weight:600;color:var(--navy)}
+.fmeta{color:var(--muted);font-size:14.5px;margin-left:auto}
+.mawb+.mawb{border-top:1px solid var(--line)}
+.mhead{display:flex;align-items:center;gap:12px;padding:10px 18px;flex-wrap:wrap}
+.mcode{font-weight:700;font-size:17px;color:var(--navy)}
+.mhead .fmeta{margin-left:0}
+.cbx{width:26px;height:26px;accent-color:var(--blue);flex:none;cursor:pointer}
+.hrow{display:grid;grid-template-columns:40px minmax(0,2.4fr) minmax(0,.8fr) minmax(0,1.3fr) 120px 120px;gap:12px;align-items:center;padding:12px 18px;border-top:1px dashed var(--line);cursor:pointer;min-height:70px}
+.hrow:hover,.hrow.sel{background:var(--sky-2)}
+.hrow.sel{box-shadow:inset 4px 0 0 var(--blue)}
+.hawb{font-weight:700;font-size:17.5px;color:var(--ink);letter-spacing:.02em}
+.cust{font-size:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h-dest,.h-pcs{font-weight:600}
+.mbar{height:8px;border-radius:9px;background:var(--slate-soft);overflow:hidden;margin-top:4px}
+.mbar.big{height:12px;margin-bottom:14px}
+.mbar i{display:block;height:100%;background:var(--green);border-radius:9px}
+.actbar{position:fixed;left:272px;right:0;bottom:0;z-index:30;background:var(--navy);color:#fff;padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;box-shadow:0 -6px 20px rgba(0,0,0,.18)}
+.actbar .cnt{font-weight:700;font-size:18px;margin-right:auto}
+.btn.to-DAC{background:var(--blue);color:#fff}
+.btn.to-BLC{background:var(--green);color:#fff}
+.btn.to-UN,.btn.to-UNASSIGNED{background:var(--slate-soft);color:var(--navy)}
+#blist{padding-bottom:90px}
+
+/* modal & drawer */
+.modal-bg,.drawer-bg{position:fixed;inset:0;background:rgba(6,20,40,.5);z-index:60}
+.modal-bg{display:grid;place-items:center;padding:16px}
+.modal{width:min(560px,100%);max-height:85vh;overflow:auto;padding:22px}
+.modal h3{margin:0 0 10px;color:var(--navy)}
+.drawer-bg{display:flex;justify-content:flex-end}
+.drawer{background:var(--sky-2);width:min(820px,100%);height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.2)}
+.dhead{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dtitle{font-size:26px;font-weight:700;color:var(--navy);word-break:break-all;line-height:1.2}
+.dbody{padding:18px 20px 60px;display:flex;flex-direction:column;gap:16px}
+.dcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.dcard h3{margin:0 0 14px;font-size:18px;color:var(--navy)}
+.note-box{background:var(--amber-soft);color:#7a4c00;border-radius:12px;padding:14px 16px;font-weight:600}
+.note-box .row-btns{margin-top:10px}
+.stbtns{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stbtn{min-height:68px;border-radius:12px;border:2px solid transparent;background:var(--bg);color:var(--c);font-weight:700;letter-spacing:.04em;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
+.stbtn small{font-weight:500;font-size:13px;letter-spacing:0}
+.stbtn.on{border-color:var(--c);box-shadow:0 0 0 3px #fff inset;background:var(--c);color:#fff}
+.stbtn:disabled{cursor:default;opacity:.75}
+.stbtn.on:disabled{opacity:1}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.grid-3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0 14px;align-items:end}
+.prog-line{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:6px;font-size:17px}
+.prog-line b{font-size:24px}
+.truck{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--sky-2)}
+.truck.add{background:var(--sky);border-style:dashed}
+.truck-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tno{color:var(--muted);font-size:14px;font-weight:600}
+.plate{font-weight:700;font-size:17px;border:2px solid var(--ink);border-radius:6px;padding:2px 10px;background:#fff;letter-spacing:.04em;white-space:nowrap}
+input.plate{max-width:150px;min-height:44px}
+.pcs-in{display:flex;align-items:center;gap:6px;font-weight:600}
+.pcs-in .inp{width:100px;min-height:44px}
+.truck .del{margin-left:auto;color:var(--red)}
+.stamps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.btn{white-space:nowrap}
+.stamp>span{display:block;font-size:13.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.sline{display:flex;gap:6px}
+.sline .inp{min-height:44px;padding:0 8px;font-size:15px;min-width:0}
+.kvgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px}
+.kv.wide{grid-column:1/-1}
+.kv .v{font-weight:600;font-size:16.5px;word-break:break-word}
+tr.click,li.click{cursor:pointer}
+tr.click:hover td{background:var(--sky-2)}
+.tbl.small td,.tbl.small th{padding:8px 10px;font-size:15px}
+
+/* import */
+.drop{display:flex;flex-direction:column;align-items:center;gap:10px;padding:44px 20px;border:2.5px dashed var(--blue-2);border-radius:var(--radius);background:#fff;color:var(--navy);text-align:center;cursor:pointer}
+.drop b{font-size:21px}
+.drop span{color:var(--muted)}
+.drop.over{background:var(--sky)}
+.sheets{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.sheetbox{flex:1 1 220px;border:1.5px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;gap:10px;background:var(--sky-2)}
+.sheetbox.bad{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+.istats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0}
+.istats div{background:var(--sky-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.istats b{display:block;font-size:32px;color:var(--navy);line-height:1.1}
+.istats span{color:var(--muted);font-size:14.5px}
+details.changes{margin:10px 0;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:#fff}
+details.changes summary{cursor:pointer;font-weight:600;color:var(--blue)}
+
+@media (max-width:980px){
+  .actbar{left:0;padding:10px 14px}
+  .actbar .cnt{width:100%;font-size:16px}
+  .actbar .btn{flex:1;min-width:120px;font-size:15px;padding:0 10px}
+  .hrow{grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"c m m" "c d p" "c w s";row-gap:6px;padding:12px 14px}
+  .hrow>input,.hrow>span:first-child{grid-area:c;align-self:start}
+  .h-main{grid-area:m}.h-dest{grid-area:d}.h-pcs{grid-area:p}.h-wh{grid-area:w}.h-st{grid-area:s;justify-self:end}
+  .fhead,.mhead{padding:10px 14px}
+  .fmeta{margin-left:0;width:100%}
+  .fcode{font-size:20px}
+  .stbtns{grid-template-columns:repeat(2,1fr)}
+  .stbtns .stbtn:last-child{grid-column:1/-1}
+  .grid-2,.grid-3,.stamps{grid-template-columns:1fr}
+  .kvgrid{grid-template-columns:1fr 1fr}
+  .istats{grid-template-columns:1fr}
+  .dhead{padding:12px 14px}.dbody{padding:14px 12px 60px}
+  .dtitle{font-size:22px}
+  .chips .lab{min-width:100%}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =====================================================================
+   Excel reader (built-in, no external library)
+   Reads .xlsx: unzip with the browser's DecompressionStream, parse XML.
+   ===================================================================== */
+const XL = (() => {
+  async function inflate(bytes) {
+    const ds = new DecompressionStream('deflate-raw');
+    return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+  }
+  function unzip(buf) {
+    const u8 = new Uint8Array(buf), dv = new DataView(buf);
+    let eocd = -1;
+    for (let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    if (eocd < 0) throw new Error('NOT_XLSX');
+    const n = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    const files = {};
+    const dec = new TextDecoder();
+    for (let k = 0; k < n; k++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+      const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true);
+      const name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+      const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+      const data = u8.subarray(start, start + csize);
+      files[name] = async () => dec.decode(method === 0 ? data : await inflate(data));
+      p += 46 + nl + el + cl;
+    }
+    return files;
+  }
+  const xml = s => new DOMParser().parseFromString(s, 'application/xml');
+  const all = (node, tag) => Array.from(node.getElementsByTagNameNS('*', tag));
+  function colIdx(ref) { let c = 0; for (const ch of ref) { const k = ch.charCodeAt(0); if (k < 65 || k > 90) break; c = c * 26 + (k - 64); } return c - 1; }
+
+  // returns [{name, rows: [[cell,...],...]}]  (max 40 columns)
+  async function read(buf, maxCols = 40) {
+    const z = unzip(buf);
+    const get = async n => (z[n] ? z[n]() : null);
+    const wbx = await get('xl/workbook.xml');
+    if (!wbx) throw new Error('NOT_XLSX');
+    const rels = {};
+    all(xml(await get('xl/_rels/workbook.xml.rels') || '<x/>'), 'Relationship').forEach(r => rels[r.getAttribute('Id')] = r.getAttribute('Target'));
+    const ss = [];
+    const ssx = await get('xl/sharedStrings.xml');
+    if (ssx) all(xml(ssx), 'si').forEach(si => ss.push(all(si, 't').filter(t => t.parentNode.localName !== 'rPh').map(t => t.textContent).join('')));
+    const out = [];
+    for (const sh of all(xml(wbx), 'sheet')) {
+      const rid = sh.getAttribute('r:id') || sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+      let target = rels[rid] || '';
+      target = target.startsWith('/') ? target.slice(1) : 'xl/' + target.replace(/^\.\//, '');
+      const sx = await get(target);
+      if (!sx) continue;
+      const rows = [];
+      for (const row of all(xml(sx), 'row')) {
+        const ri = parseInt(row.getAttribute('r'), 10) - 1;
+        const arr = [];
+        let ci = -1;
+        for (const c of all(row, 'c')) {
+          const ref = c.getAttribute('r');
+          ci = ref ? colIdx(ref) : ci + 1;
+          if (ci >= maxCols) continue;
+          const t = c.getAttribute('t'), vEl = all(c, 'v')[0];
+          let v = vEl ? vEl.textContent : null;
+          if (t === 's') v = ss[parseInt(v, 10)] ?? '';
+          else if (t === 'inlineStr') v = all(c, 't').map(x => x.textContent).join('');
+          else if (t === 'b') v = v === '1';
+          else if (t === 'str' || t === 'e') v = v ?? '';
+          else if (v !== null && v !== '') v = Number(v);
+          if (v !== null && v !== '') arr[ci] = v;
+        }
+        rows[ri] = arr;
+      }
+      out.push({ name: sh.getAttribute('name'), rows });
+    }
+    return out;
+  }
+  return { read };
+})();
+
+/* =====================================================================
+   PLANLOAD parser (AIR EXPORT CONSIGNMENT DAILY PLANLOAD)
+   Header row has: SHIPPER | CGO P/U | TIME | PCS | PRIO | G/W [KGS] | VL.WT. | CBM |
+                   HAWB NO. | MAWB.NO. | FLT NO. | ETD | DEST | BKG | Cut-off | Branch | O/B | REMARK
+   Consolidations: MAWB / FLT / ETD written only on the first HAWB of a block → fill down
+   until a non-HAWB row (blank, ratio or TOTAL row).
+   ===================================================================== */
+const PLAN = (() => {
+  const H = s => String(s ?? '').toUpperCase().replace(/[^A-Z0-9ก-๙]/g, '');
+  const COLS = [
+    ['customer', h => /^(SHIPPER|CUSTOMER|CONSIGNOR)/.test(h)],
+    ['pu_date',  h => /^(CGOPU|PU|PICKUP|CARGOPU)/.test(h)],
+    ['pu_time',  h => h === 'TIME' || h === 'PUTIME'],
+    ['pcs',      h => /^(PCS|PIECES|PKGS?)$/.test(h)],
+    ['priority', h => /^PRIO/.test(h)],
+    ['gw',       h => /^(GW|GROSS)/.test(h)],
+    ['vw',       h => /^(VLWT|VOLWT|VW|VOLUME)/.test(h)],
+    ['cbm',      h => h === 'CBM'],
+    ['hawb',     h => /^(HAWB|HOUSE)/.test(h)],
+    ['mawb',     h => /^(MAWB|MASTER)/.test(h)],
+    ['flight',   h => /^(FLT|FLIGHT)/.test(h)],
+    ['etd',      h => h === 'ETD'],
+    ['dest',     h => /^(DEST|DST)/.test(h)],
+    ['booking',  h => /^(BKG|BOOKING)/.test(h)],
+    ['cutoff',   h => /^CUTOFF/.test(h)],
+    ['ob',       h => h === 'OB'],
+    ['remark',   h => /^REMARK/.test(h)]
+  ];
+  const REQUIRED = ['hawb', 'mawb', 'flight', 'pcs'];
+  const MON = { JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6, JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12 };
+  const pad = n => String(n).padStart(2, '0');
+  const str = v => (v === null || v === undefined) ? '' : String(v).replace(/\s+/g, ' ').trim();
+
+  function sheetTag(name) {
+    const u = name.toUpperCase();
+    if (u.includes('DMK')) return 'DMK';
+    if (u.includes('BKK') || u.includes('SUVARN')) return 'BKK-SUVARNABHUMI';
+    return null;
+  }
+  function dateFromFileName(fn) {
+    const m = String(fn).toUpperCase().match(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*[\s_.\-]*(\d{1,2})[\s_.,\-]*(\d{4})/);
+    if (!m) return null;
+    const y = +m[3], mo = MON[m[1]], d = +m[2];
+    return d >= 1 && d <= 31 ? `${y}-${pad(mo)}-${pad(d)}` : null;
+  }
+  function hawbId(v) {
+    if (typeof v === 'number') return Number.isInteger(v) && v >= 1e7 ? String(v) : null;
+    const s = str(v).toUpperCase();
+    if (!s) return null;
+    if (s === 'DIRECT') return 'DIRECT';
+    const k = s.replace(/\s+/g, '').replace(/[.,]+$/, '');
+    let m = k.match(/^([A-Z]{2,5})-?(\d{4})(\d{4})$/);
+    if (m) return `${m[1]}-${m[2]} ${m[3]}`;
+    if (/^[A-Z]{2,5}-?\d{6,}$/.test(k) || /^\d{8,}$/.test(k)) return k;
+    return null;
+  }
+  function mawbOf(v) {
+    const s = str(v);
+    const m = s.match(/^(\d{3})\s*-?\s*(\d{3,4})\s*(\d{4})$/);
+    return m ? `${m[1]}-${m[2]} ${m[3]}` : null;
+  }
+  function flightOf(v) {
+    const s = str(v).toUpperCase();
+    return /^[A-Z0-9]{2}(\/[A-Z0-9]{2})?\s?\d{1,4}[A-Z]?\s*\/\s*\d{1,3}$/.test(s) ? s.replace(/\s+/g, '') : null;
+  }
+  function timeOf(v) {
+    let h, m;
+    if (typeof v === 'number') { if (v < 0 || v >= 24) return null; h = Math.floor(v); m = Math.round((v - h) * 100); }
+    else {
+      const s = str(v).replace(/^'/, '');
+      const x = s.match(/^(\d{1,2})(?:[.:](\d{1,2}))?$/);
+      if (!x) return null;
+      h = +x[1]; m = x[2] ? +(x[2].length === 1 ? x[2] + '0' : x[2]) : 0;
+    }
+    return h < 24 && m < 60 ? `${pad(h)}:${pad(m)}` : null;
+  }
+  function num(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    const n = parseFloat(str(v).replace(/,/g, ''));
+    return isFinite(n) ? n : null;
+  }
+  function etdIso(flight, time, planDate) {
+    if (!time || !planDate) return null;
+    let [y, mo, pd] = planDate.split('-').map(Number);
+    let d = pd;
+    const fm = flight && flight.match(/\/(\d{1,2})$/);
+    if (fm && +fm[1] >= 1 && +fm[1] <= 31) {
+      d = +fm[1];
+      if (d < pd - 10) mo += 1;   // แพลนเป็นงานล่วงหน้า: วันที่น้อยกว่ามาก = เดือนถัดไป
+      if (mo > 12) { mo = 1; y++; } if (mo < 1) { mo = 12; y--; }
+    }
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    if (dt.getUTCDate() !== d) return null;
+    return `${y}-${pad(mo)}-${pad(d)}T${time}:00+07:00`;
+  }
+
+  function parse(sheets, planDate) {
+    const result = { rows: [], sheets: [], dupInFile: 0, noEtd: 0 };
+    const byHawb = new Map();
+    let use = sheets.filter(s => sheetTag(s.name));
+    if (!use.length) use = sheets;
+    for (const sh of use) {
+      const info = { name: sh.name, tag: sheetTag(sh.name), count: 0, missing: [], headerRow: -1, notes: 0 };
+      result.sheets.push(info);
+      const rows = sh.rows;
+      for (let r = 0; r < Math.min(rows.length, 40); r++) {
+        if ((rows[r] || []).some(c => /^HAWB/.test(H(c)))) { info.headerRow = r; break; }
+      }
+      if (info.headerRow < 0) { info.missing = ['HAWB']; continue; }
+      const col = {};
+      (rows[info.headerRow] || []).forEach((c, i) => {
+        const h = H(c);
+        if (!h) return;
+        for (const [k, test] of COLS) if (col[k] === undefined && test(h)) { col[k] = i; break; }
+      });
+      info.missing = REQUIRED.filter(k => col[k] === undefined).map(k => k.toUpperCase());
+      if (info.missing.length) continue;
+      const g = (row, k) => col[k] === undefined ? null : row[col[k]];
+      let carry = {};
+      for (let r = info.headerRow + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        let id = hawbId(g(row, 'hawb'));
+        if (!id) { carry = {}; continue; }
+        const notes = [];
+        const mRaw = g(row, 'mawb'), mVal = mawbOf(mRaw);
+        if (mVal) carry.mawb = mVal; else if (str(mRaw)) notes.push(str(mRaw));
+        const fRaw = g(row, 'flight'), fVal = flightOf(fRaw);
+        if (fVal) carry.flight = fVal; else if (str(fRaw)) notes.push(str(fRaw));
+        const t = timeOf(g(row, 'etd')); if (t) carry.etd = t;
+        for (const k of ['customer', 'dest', 'cutoff', 'booking']) { const v = str(g(row, k)); if (v) carry[k] = v; }
+        const mawb = mVal || carry.mawb || '';
+        const flight = fVal || carry.flight || '';
+        if (id === 'DIRECT') { if (!mawb) continue; id = 'DIRECT ' + mawb; }
+        const puD = str(g(row, 'pu_date')).replace(/^'/, ''), puT = timeOf(g(row, 'pu_time'));
+        info.notes += notes.length;
+        const remark = [...notes, str(g(row, 'remark')), str(g(row, 'ob'))].filter(Boolean).join(' · ');
+        const etd = etdIso(flight, carry.etd || null, planDate);
+        const rec = {
+          hawb: id, mawb, flight,
+          customer: carry.customer || '',
+          pcs: num(g(row, 'pcs')),
+          gross_weight: num(g(row, 'gw')),
+          volume_weight: num(g(row, 'vw')),
+          cbm: num(g(row, 'cbm')),
+          destination: (carry.dest || '').toUpperCase(),
+          etd,
+          source_sheet: info.tag,
+          pickup: [puD, puT].filter(Boolean).join(' '),
+          cut_off: carry.cutoff || '',
+          priority: str(g(row, 'priority')),
+          booking: carry.booking || '',
+          remark,
+          plan_date: planDate || null
+        };
+        if (!etd) result.noEtd++;
+        if (byHawb.has(id)) { result.dupInFile++; result.rows[byHawb.get(id)] = rec; }
+        else { byHawb.set(id, result.rows.length); result.rows.push(rec); }
+        info.count++;
+      }
+    }
+    return result;
+  }
+  return { parse, dateFromFileName, hawbId };
+})();
+
+/* =====================================================================
+   NIPPON SHIPMENT TRACKING · v0.2
+   Developed by Supanee Sinmool
+   ===================================================================== */
+const CFG = {
+  url: 'https://txcfktnoxyjcemetdlrc.supabase.co',
+  key: 'sb_publishable_srmVLfk3ClcQyyDop6VqFw_s_P6CgK2',
+  domain: 'nipponexpress.com',
+  credit: 'Supanee Sinmool',
+  version: '0.2'
+};
+const sb = supabase.createClient(CFG.url, CFG.key);
+const $app = document.getElementById('app');
+const S = { session: null, profile: null, page: 'dashboard', period: 'all', channel: null };
+
+const STATUS = {
+  WAITING:  { th: 'รอดำเนินการ', c: 'var(--slate)' },
+  ARRIVED:  { th: 'รถมาถึง',     c: 'var(--blue)' },
+  LOADING:  { th: 'กำลังโหลด',   c: 'var(--amber)' },
+  DEPARTED: { th: 'ออกไปแล้ว',   c: 'var(--green)' },
+  ISSUE:    { th: 'มีปัญหา',      c: 'var(--red)' }
+};
+const DEPTS = {
+  DAC: 'คลัง DAC', BLC: 'คลัง BLC', CONSOLE: 'Console', SHIPPING: 'Shipping', MANAGEMENT: 'ผู้บริหาร', OTHER: 'ยังไม่ระบุฝ่าย'
+};
+const PAGES_ALL = [
+  { id: 'dashboard', th: 'Dashboard',       icon: 'grid' },
+  { id: 'board',     th: 'งานทั้งหมด / ค้นหา', icon: 'search' },
+  { id: 'assign',    th: 'จัดสรรคลัง',       icon: 'layers' },
+  { id: 'trucks',    th: 'รถและการโหลด',     icon: 'truck' },
+  { id: 'import',    th: 'นำเข้าแพลน Excel', icon: 'upload', edit: true },
+  { id: 'history',   th: 'ประวัติการทำงาน',   icon: 'clock' },
+  { sep: true },
+  { id: 'users',     th: 'จัดการผู้ใช้',      icon: 'users',  admin: true },
+  { id: 'settings',  th: 'ตั้งค่า',           icon: 'gear' }
+];
+
+const PAGES = PAGES_ALL;
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const fmtTime = t => t ? new Date(t).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+const num = n => (n ?? 0).toLocaleString('th-TH');
+const canEdit = () => S.profile && S.profile.active && (S.profile.role === 'ADMIN' || ['DAC','BLC'].includes(S.profile.warehouse));
+const isAdmin = () => S.profile && S.profile.active && S.profile.role === 'ADMIN';
+function toast(msg, bad) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3800);
+}
+function thError(e) {
+  const m = (e && (e.message || e.error_description || e)) + '';
+  if (/Invalid login credentials/i.test(m)) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  if (/already registered|already been registered|already exists/i.test(m)) return 'อีเมลนี้สมัครไว้แล้ว กรุณาเข้าสู่ระบบ';
+  if (/Database error saving new user|อนุญาตเฉพาะอีเมลบริษัท/i.test(m)) return 'อนุญาตเฉพาะอีเมล @' + CFG.domain + ' เท่านั้น';
+  if (/Password should be|password.*characters/i.test(m)) return 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'เชื่อมต่อไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต';
+  if (/rate limit/i.test(m)) return 'ลองบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่';
+  return m;
+}
+function busy(btn, on, label) {
+  if (!btn) return;
+  if (on) { btn.dataset.l = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ' + (label || 'กำลังทำงาน...'); }
+  else { btn.disabled = false; btn.innerHTML = btn.dataset.l || btn.innerHTML; }
+}
+function bkkDay(offset = 0) {
+  const d = new Date(Date.now() + offset * 864e5);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(d);  // YYYY-MM-DD
+}
+
+const ICONS = {
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  layers:'<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/>',
+  truck:'<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+  upload:'<path d="M12 16V4m0 0-4 4m4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  logout:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3"/>',
+  hourglass:'<path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/>'
+};
+const ico = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
+const MARK = `<svg width="30" height="30" viewBox="0 0 32 32" fill="none"><rect x="3" y="12" width="15" height="11" rx="2" fill="#0b2a5b"/><path d="M18 15h5.5l4 4.2V23H18z" fill="#1565c0"/><circle cx="8.5" cy="24.5" r="2.6" fill="#2e9e4f" stroke="#fff" stroke-width="1.2"/><circle cx="22.5" cy="24.5" r="2.6" fill="#2e9e4f" stroke="#fff" stroke-width="1.2"/><path d="M6 8.5 20 5l3 1.2-10 4.6-3.6-1L6 8.5Z" fill="#1e88e5"/></svg>`;
+
+const HERO_ART = `
+<svg class="hero-art" viewBox="0 0 560 300" fill="none" aria-hidden="true">
+  <ellipse cx="280" cy="282" rx="270" ry="14" fill="#cfe2f6"/>
+  <path d="M40 120 L200 60 L360 120 V270 H40Z" fill="#fff" stroke="#b9d3ef" stroke-width="2"/>
+  <rect x="40" y="120" width="320" height="150" fill="#f4f9fe" stroke="#b9d3ef" stroke-width="2"/>
+  <rect x="70" y="170" width="70" height="100" rx="4" fill="#dbe9f8" stroke="#a9c7ea" stroke-width="2"/>
+  <rect x="165" y="170" width="70" height="100" rx="4" fill="#dbe9f8" stroke="#a9c7ea" stroke-width="2"/>
+  <rect x="260" y="170" width="70" height="100" rx="4" fill="#dbe9f8" stroke="#a9c7ea" stroke-width="2"/>
+  <path d="M70 190h70M70 210h70M70 230h70M165 190h70M165 210h70M165 230h70M260 190h70M260 210h70M260 230h70" stroke="#a9c7ea" stroke-width="2"/>
+  <rect x="120" y="134" width="160" height="24" rx="5" fill="#0b2a5b"/>
+  <text x="200" y="151" text-anchor="middle" font-family="IBM Plex Sans Thai,sans-serif" font-size="13" font-weight="700" fill="#fff" letter-spacing="2">DAC · BLC</text>
+  <g>
+    <rect x="300" y="196" width="150" height="62" rx="6" fill="#fff" stroke="#0b2a5b" stroke-width="2.5"/>
+    <rect x="300" y="236" width="150" height="8" fill="#1565c0"/>
+    <rect x="300" y="244" width="150" height="5" fill="#2e9e4f"/>
+    <path d="M450 214h38l26 24v20h-64z" fill="#0b2a5b"/>
+    <path d="M458 220h26l16 15h-42z" fill="#bcd9f5"/>
+    <circle cx="335" cy="262" r="12" fill="#13233d"/><circle cx="335" cy="262" r="5" fill="#cfd8e6"/>
+    <circle cx="480" cy="262" r="12" fill="#13233d"/><circle cx="480" cy="262" r="5" fill="#cfd8e6"/>
+  </g>
+  <g transform="translate(330 40) rotate(-8)">
+    <path d="M0 30 C20 22 150 18 190 24 C205 26 210 34 196 38 L20 44 C6 44 -4 36 0 30Z" fill="#fff" stroke="#0b2a5b" stroke-width="2.5"/>
+    <path d="M70 32 L120 -6 L138 -6 L110 32Z" fill="#1565c0"/>
+    <path d="M80 40 L118 70 L132 70 L112 40Z" fill="#1565c0"/>
+    <path d="M168 26 L192 2 L204 2 L190 28Z" fill="#2e9e4f"/>
+    <path d="M24 34h150" stroke="#2e9e4f" stroke-width="3"/>
+    <circle cx="40" cy="30" r="2" fill="#0b2a5b"/><circle cx="50" cy="30" r="2" fill="#0b2a5b"/><circle cx="60" cy="30" r="2" fill="#0b2a5b"/>
+  </g>
+  <path d="M120 40c10-12 30-12 40 0 12-4 22 4 20 14H112c-6-6 0-16 8-14Z" fill="#fff"/>
+  <path d="M440 120c8-10 24-10 32 0 10-3 18 3 16 11h-54c-5-5 0-13 6-11Z" fill="#fff"/>
+</svg>`;
+
+/* =====================================================================
+   AUTH
+   ===================================================================== */
+async function loadProfile() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { S.profile = null; return; }
+  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if (error) throw error;
+  S.profile = data;
+}
+
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  S.session = session;
+  if (!session) return renderLogin();
+  try { await loadProfile(); } catch (e) { toast(thError(e), true); }
+  if (!S.profile) return renderLogin('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
+  if (!S.profile.active) return renderPending();
+  renderShell();
+}
+
+function renderLogin(msg) {
+  stopLive();
+  let mode = 'in';
+  $app.innerHTML = `
+  <div class="login-wrap">
+    <section class="login-hero">
+      <div>
+        <h1>NIPPON<br>SHIPMENT TRACKING<small>ระบบติดตามงานและ Shipment ของคลัง DAC · BLC</small></h1>
+        <span class="tag">We Find the Way</span>
+      </div>
+      ${HERO_ART}
+    </section>
+    <section class="login-side">
+      <div class="login-card">
+        <h2 id="lt">เข้าสู่ระบบ</h2>
+        <p class="sub">ใช้อีเมลบริษัท @${CFG.domain}</p>
+        <div class="tabs"><button class="on" data-m="in">เข้าสู่ระบบ</button><button data-m="up">สมัครครั้งแรก</button></div>
+        <div id="lmsg">${msg ? `<div class="err">${esc(msg)}</div>` : ''}</div>
+        <form id="lf" autocomplete="on">
+          <label class="field up hidden"><span>ชื่อที่จะแสดงในระบบ</span><input class="inp" name="name" placeholder="เช่น Somchai T." autocomplete="name"></label>
+          <label class="field"><span>อีเมลบริษัท</span><input class="inp" name="email" type="email" required placeholder="name@${CFG.domain}" autocomplete="username"></label>
+          <label class="field"><span>รหัสผ่าน</span><input class="inp" name="pw" type="password" required minlength="8" placeholder="อย่างน้อย 8 ตัวอักษร" autocomplete="current-password"></label>
+          <label class="field up hidden"><span>ยืนยันรหัสผ่าน</span><input class="inp" name="pw2" type="password" minlength="8" autocomplete="new-password"></label>
+          <button class="btn btn-primary" style="width:100%" id="lb">เข้าสู่ระบบ</button>
+        </form>
+        <p class="sub" id="lhint" style="margin-top:16px;font-size:15px">ลืมรหัสผ่าน? กรุณาติดต่อผู้ดูแลระบบ</p>
+        <div class="credit">NIPPON SHIPMENT TRACKING v${CFG.version}<br>Developed by <b>${esc(CFG.credit)}</b></div>
+      </div>
+    </section>
+  </div>`;
+  const f = document.getElementById('lf');
+  const setMode = m => {
+    mode = m;
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+    document.querySelectorAll('.field.up').forEach(el => el.classList.toggle('hidden', m !== 'up'));
+    document.getElementById('lt').textContent = m === 'up' ? 'สมัครใช้งานครั้งแรก' : 'เข้าสู่ระบบ';
+    document.getElementById('lb').textContent = m === 'up' ? 'สมัครใช้งาน' : 'เข้าสู่ระบบ';
+    document.getElementById('lhint').textContent = m === 'up'
+      ? 'หลังสมัคร ผู้ดูแลระบบจะอนุมัติและกำหนดฝ่ายให้ก่อนใช้งาน'
+      : 'ลืมรหัสผ่าน? กรุณาติดต่อผู้ดูแลระบบ';
+    f.pw.autocomplete = m === 'up' ? 'new-password' : 'current-password';
+    document.getElementById('lmsg').innerHTML = '';
+  };
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+  f.onsubmit = async ev => {
+    ev.preventDefault();
+    const out = document.getElementById('lmsg');
+    const email = f.email.value.trim().toLowerCase();
+    const pw = f.pw.value;
+    const fail = m => out.innerHTML = `<div class="err">${esc(m)}</div>`;
+    if (!email.endsWith('@' + CFG.domain)) return fail('อนุญาตเฉพาะอีเมล @' + CFG.domain + ' เท่านั้น');
+    if (pw.length < 8) return fail('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+    const btn = document.getElementById('lb');
+    if (mode === 'up') {
+      if (pw !== f.pw2.value) return fail('รหัสผ่านทั้งสองช่องไม่ตรงกัน');
+      if (!f.name.value.trim()) return fail('กรุณาใส่ชื่อที่จะแสดงในระบบ');
+      busy(btn, true, 'กำลังสมัคร...');
+      const { data, error } = await sb.auth.signUp({ email, password: pw });
+      if (error) { busy(btn, false); return fail(thError(error)); }
+      if (!data.session) {
+        busy(btn, false);
+        return fail('สมัครแล้ว แต่ระบบยังเปิดการยืนยันอีเมลอยู่ กรุณาแจ้งผู้ดูแลระบบ');
+      }
+      await sb.rpc('set_my_name', { p_display_name: f.name.value.trim() });
+    } else {
+      busy(btn, true, 'กำลังเข้าสู่ระบบ...');
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      if (error) { busy(btn, false); return fail(thError(error)); }
+    }
+    boot();
+  };
+}
+
+function renderPending() {
+  stopLive();
+  const p = S.profile;
+  $app.innerHTML = `
+  <div class="center-page">
+    <div class="card pending">
+      <div class="ico">${ico('hourglass', 34)}</div>
+      <h2 style="margin:0 0 6px;color:var(--navy)">รอผู้ดูแลระบบอนุมัติ</h2>
+      <p style="color:var(--muted);margin:0 0 18px">บัญชี <b>${esc(p.email)}</b> สมัครเรียบร้อยแล้ว<br>เมื่อผู้ดูแลอนุมัติและกำหนดฝ่ายให้ จะเข้าใช้งานได้ทันที</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="rc">ตรวจสอบอีกครั้ง</button>
+        <button class="btn btn-ghost" id="lo">ออกจากระบบ</button>
+      </div>
+      <div class="credit">Developed by <b>${esc(CFG.credit)}</b></div>
+    </div>
+  </div>`;
+  document.getElementById('rc').onclick = boot;
+  document.getElementById('lo').onclick = logout;
+  clearTimeout(S.pendTimer);
+  S.pendTimer = setTimeout(() => { if (S.profile && !S.profile.active) boot(); }, 30000);
+}
+
+async function logout() {
+  stopLive();
+  await sb.auth.signOut();
+  S.profile = null; S.session = null;
+  location.hash = '';
+  renderLogin();
+}
+
+/* =====================================================================
+   SHELL
+   ===================================================================== */
+function renderShell() {
+  const p = S.profile;
+  const dept = p.role === 'ADMIN' && p.department === 'OTHER' ? 'ผู้ดูแลระบบ' : DEPTS[p.department] || p.department;
+  const nav = PAGES.filter(x => x.sep || ((!x.admin || isAdmin()) && (!x.edit || canEdit()))).map(x => x.sep ? '<div class="sep"></div>' :
+    `<a href="#${x.id}" data-p="${x.id}">${ico(x.icon)}<span>${x.th}</span>${x.soon ? '<span class="soon">เร็วๆ นี้</span>' : ''}</a>`).join('');
+  $app.innerHTML = `
+  <div class="shell">
+    <aside class="side" id="side">
+      <div class="brand"><div class="brand-mark">${MARK}</div><div class="brand-txt"><b>NIPPON</b><small>SHIPMENT TRACKING</small></div></div>
+      <nav class="nav">${nav}</nav>
+      <div class="me">
+        <div class="avatar">${esc((p.display_name || p.email)[0].toUpperCase())}</div>
+        <div><b>${esc(p.display_name || p.email)}</b><small>${esc(dept)}${p.role === 'ADMIN' ? ' · ADMIN' : ''}</small></div>
+        <button title="ออกจากระบบ" id="lo" style="margin-left:auto;background:transparent;border:0;color:#a9c4ea;cursor:pointer;width:40px;height:40px">${ico('logout')}</button>
+      </div>
+      <div class="side-credit">v${CFG.version} · Developed by ${esc(CFG.credit)}</div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><button id="mb" aria-label="เมนู">${ico('menu', 26)}</button><div class="brand-mark" style="width:34px;height:34px">${MARK}</div><b>NIPPON SHIPMENT TRACKING</b></div>
+      <main class="page" id="page"></main>
+    </div>
+  </div>`;
+  document.getElementById('lo').onclick = logout;
+  const side = document.getElementById('side');
+  document.getElementById('mb').onclick = e => { e.stopPropagation(); side.classList.toggle('open'); };
+  document.addEventListener('click', e => { if (side.classList.contains('open') && !side.contains(e.target)) side.classList.remove('open'); });
+  side.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => side.classList.remove('open')));
+  startLive();
+  route();
+}
+
+window.addEventListener('hashchange', () => { if (S.profile && S.profile.active && document.getElementById('page')) route(); });
+
+function route() {
+  let id = (location.hash || '#dashboard').slice(1);
+  const pg = PAGES.find(x => x.id === id && (!x.admin || isAdmin()) && (!x.edit || canEdit()));
+  if (!pg) id = 'dashboard';
+  S.page = id;
+  document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', a.dataset.p === id));
+  const el = document.getElementById('page');
+  closeDrawer(true);
+  ({ dashboard: pageDashboard, board: pageBoard, assign: pageBoard, trucks: pageTrucks, import: pageImport, history: pageHistory, users: pageUsers, settings: pageSettings }[id] || pageSoon)(el, pg || PAGES[0]);
+  window.scrollTo(0, 0);
+}
+
+/* ---------- realtime: refresh when anyone changes data ---------- */
+function startLive() {
+  stopLive();
+  let t;
+  const kick = payload => {
+    const n = (payload && (payload.new || payload.old)) || {};
+    const sid = n.shipment_id || n.id;
+    if (S.openId && sid === S.openId) {
+      clearTimeout(S.dTimer);
+      S.dTimer = setTimeout(() => { const a = document.activeElement; if (!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest('#drawer'))) loadDrawer(); }, 600);
+    }
+    clearTimeout(t);
+    t = setTimeout(() => {
+      if (S.page === 'dashboard') loadDashboard();
+      else if ((S.page === 'board' || S.page === 'assign') && !S.openId) loadBoard();
+      else if (S.page === 'board' || S.page === 'assign') S.boardStale = true;
+      else if (S.page === 'trucks') loadTrucks();
+    }, 900);
+  };
+  S.channel = sb.channel('nst-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shipments' }, kick)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'trucks' }, kick)
+    .subscribe();
+}
+function stopLive() { if (S.channel) { sb.removeChannel(S.channel); S.channel = null; } }
+
+/* =====================================================================
+   DASHBOARD
+   ===================================================================== */
+function pageDashboard(el) {
+  const p = S.profile;
+  const hello = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  el.innerHTML = `
+    <div class="banner">
+      <div><h2>สวัสดี ${esc(p.display_name || '')}</h2><p>${hello}</p></div>
+      <svg width="190" height="64" viewBox="0 0 190 64" fill="none" aria-hidden="true">
+        <g transform="translate(70 4) rotate(-6)"><path d="M0 18C14 13 90 10 112 14c9 2 11 7 3 9L12 27C3 27-3 22 0 18Z" fill="#fff"/><path d="M42 19 72-4h10L66 19Z" fill="#9fd0ff"/><path d="M48 24l22 18h8L67 24Z" fill="#9fd0ff"/><path d="M98 16l14-14h7l-8 15Z" fill="#7fd99a"/></g>
+        <g transform="translate(0 30)"><rect x="0" y="4" width="62" height="24" rx="3" fill="#fff"/><rect x="0" y="20" width="62" height="3" fill="#7fd99a"/><path d="M62 10h14l10 9v9H62z" fill="#cfe5ff"/><circle cx="14" cy="30" r="4.5" fill="#0b2a5b" stroke="#fff" stroke-width="2"/><circle cx="72" cy="30" r="4.5" fill="#0b2a5b" stroke="#fff" stroke-width="2"/></g>
+      </svg>
+    </div>
+    <div class="page-head">
+      <div><h1>ภาพรวมงาน</h1><div class="sub">นับตามวันเวลาออก (ETD) · <span class="live">อัปเดตอัตโนมัติ</span></div></div>
+      <div class="chips" id="per">
+        <button class="chip" data-v="today">วันนี้</button>
+        <button class="chip" data-v="tomorrow">พรุ่งนี้</button>
+        <button class="chip" data-v="7d">7 วันล่าสุด</button>
+        <button class="chip" data-v="all">ทั้งหมด</button>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="grid2">
+      <div class="card panel"><h3>ภาพรวมตามคลัง</h3><div id="whs"><div class="empty">กำลังโหลด...</div></div>
+        <div class="legend">${Object.entries(STATUS).map(([k, v]) => `<span style="--c:${v.c}">${k}</span>`).join('')}</div></div>
+      <div class="card panel"><h3>งานที่มีปัญหา <span class="badge s-ISSUE" id="isc">0</span></h3><ul class="list" id="issues"><li class="empty">กำลังโหลด...</li></ul></div>
+    </div>
+    <div class="card panel" style="margin-top:18px"><h3>ความเคลื่อนไหวล่าสุด</h3><ul class="list" id="acts"><li class="empty">กำลังโหลด...</li></ul></div>`;
+  el.querySelectorAll('#per .chip').forEach(b => {
+    b.classList.toggle('on', b.dataset.v === S.period);
+    b.onclick = () => { S.period = b.dataset.v; el.querySelectorAll('#per .chip').forEach(x => x.classList.toggle('on', x === b)); loadDashboard(); };
+  });
+  loadDashboard();
+}
+
+function periodFilter(q) {
+  if (S.period === 'today')    return q.gte('etd', bkkDay(0) + 'T00:00:00+07:00').lt('etd', bkkDay(1) + 'T00:00:00+07:00');
+  if (S.period === 'tomorrow') return q.gte('etd', bkkDay(1) + 'T00:00:00+07:00').lt('etd', bkkDay(2) + 'T00:00:00+07:00');
+  if (S.period === '7d')       return q.gte('etd', bkkDay(-6) + 'T00:00:00+07:00').lt('etd', bkkDay(1) + 'T00:00:00+07:00');
+  return q;
+}
+
+async function loadDashboard() {
+  const whs = ['UNASSIGNED', 'DAC', 'BLC'], sts = Object.keys(STATUS);
+  const jobs = [];
+  for (const w of whs) for (const s of sts)
+    jobs.push(periodFilter(sb.from('shipments').select('id', { count: 'exact', head: true }).eq('warehouse', w).eq('status', s))
+      .then(r => { if (r.error) throw r.error; return { w, s, n: r.count || 0 }; }));
+  let rows;
+  try { rows = await Promise.all(jobs); }
+  catch (e) { const st = document.getElementById('stats'); if (st) st.innerHTML = `<div class="err" style="grid-column:1/-1">โหลดข้อมูลไม่ได้: ${esc(thError(e))}</div>`; return; }
+  if (S.page !== 'dashboard') return;
+  const c = {}; whs.forEach(w => c[w] = { total: 0 }); sts.forEach(s => c[s] = 0);
+  let total = 0;
+  rows.forEach(r => { c[r.w][r.s] = r.n; c[r.w].total += r.n; c[r.s] += r.n; total += r.n; });
+
+  const card = (lbl, th, n, col) => `<div class="stat" style="--c:${col}"><div class="lbl">${lbl}</div><div class="num">${num(n)}</div><div class="th">${th}</div></div>`;
+  document.getElementById('stats').innerHTML =
+    card('ทั้งหมด', 'HAWB ทั้งหมด', total, 'var(--navy)') +
+    card('UNASSIGNED', 'ยังไม่จัดคลัง', c.UNASSIGNED.total, '#8a96a8') +
+    sts.map(s => card(s, STATUS[s].th, c[s], STATUS[s].c)).join('');
+
+  document.getElementById('whs').innerHTML = whs.map(w => {
+    const t = c[w].total || 0;
+    const segs = t ? sts.map(s => c[w][s] ? `<i title="${s}: ${c[w][s]}" style="width:${c[w][s] / t * 100}%;background:${STATUS[s].c}"></i>` : '').join('') : '';
+    return `<div class="wh-row"><span class="badge w-${w}">${w === 'UNASSIGNED' ? 'ยังไม่จัดคลัง' : w}</span><div class="bar">${segs}</div><div class="wh-total">${num(t)}</div></div>`;
+  }).join('');
+
+  const [iss, his] = await Promise.all([
+    periodFilter(sb.from('shipments').select('id,hawb,flight,warehouse,issue_note,updated_at').eq('status', 'ISSUE')).order('updated_at', { ascending: false }).limit(6),
+    sb.from('history').select('*').not('action', 'in', '(PLAN_NEW,PLAN_UPDATE)').order('changed_at', { ascending: false }).limit(10)
+  ]);
+  if (S.page !== 'dashboard') return;
+  document.getElementById('isc').textContent = c.ISSUE;
+  document.getElementById('issues').innerHTML = (iss.data || []).length ? iss.data.map(x =>
+    `<li><span class="dot" style="--c:var(--red)"></span><div style="flex:1;min-width:0"><b>${esc(x.hawb)}</b> · ${esc(x.flight || '-')} <span class="badge w-${esc(x.warehouse)}" style="margin-left:6px">${esc(x.warehouse)}</span><div style="color:var(--muted);font-size:15px">${esc(x.issue_note || 'ไม่ระบุรายละเอียด')}</div></div><span class="t">${fmtTime(x.updated_at)}</span></li>`).join('')
+    : '<li class="empty">ไม่มีงานที่มีปัญหา 👍</li>';
+  document.getElementById('acts').innerHTML = (his.data || []).length ? his.data.map(actLine).join('')
+    : '<li class="empty">ยังไม่มีความเคลื่อนไหว · เริ่มจากนำเข้าแพลน Excel</li>';
+}
+
+function actLine(h) {
+  const who = esc((h.changed_by || '').split('@')[0]);
+  const d = h.details || {};
+  let txt, col = 'var(--blue)';
+  switch (h.action) {
+    case 'IMPORT':      txt = `นำเข้าแพลน ${esc(d.plan_round || '')} · ใหม่ ${d.new || 0} · อัปเดต ${d.updated || 0}`; col = 'var(--navy)'; break;
+    case 'PLAN_NEW':    txt = `เพิ่ม HAWB ใหม่ <b>${esc(h.hawb)}</b>`; col = 'var(--navy)'; break;
+    case 'PLAN_UPDATE': txt = `แพลนแก้ไข <b>${esc(h.hawb)}</b> (${Object.keys(d).join(', ')})`; col = 'var(--navy)'; break;
+    case 'ASSIGN':      txt = `จัด <b>${esc(h.hawb)}</b> → <span class="badge w-${esc(h.to_value)}">${esc(h.to_value)}</span>`; col = 'var(--green)'; break;
+    case 'STATUS':      txt = `<b>${esc(h.hawb)}</b> ${esc(h.from_value)} → <span class="badge s-${esc(h.to_value)}">${esc(h.to_value)}</span>`; col = (STATUS[h.to_value] || {}).c || col; break;
+    case 'HOLDER':      txt = `<b>${esc(h.hawb)}</b> ตอนนี้อยู่กับ <b>${esc(h.to_value || '-')}</b>`; break;
+    case 'STAFF':       txt = `<b>${esc(h.hawb)}</b> ผู้รับผิดชอบ: <b>${esc(h.to_value || '-')}</b>`; break;
+    case 'TRUCK_ADD':   txt = `เพิ่มรถ <b>${esc(d.truck_plate || '')}</b> ให้ <b>${esc(h.hawb)}</b> (${d.pcs_loaded || 0} PCS)`; col = 'var(--amber)'; break;
+    case 'TRUCK_EDIT':  txt = `แก้ข้อมูลรถของ <b>${esc(h.hawb)}</b>`; col = 'var(--amber)'; break;
+    case 'TRUCK_DELETE':txt = `ลบรถ <b>${esc(d.truck_plate || '')}</b> ของ <b>${esc(h.hawb)}</b>`; col = 'var(--red)'; break;
+    case 'USER':        txt = `ตั้งค่าผู้ใช้ ${esc(d.email || '')} → ${esc(DEPTS[d.department] || d.department || '')}`; col = 'var(--slate)'; break;
+    default:            txt = esc(h.action);
+  }
+  return `<li><span class="dot" style="--c:${col}"></span><div style="flex:1;min-width:0">${txt}<div style="color:var(--muted);font-size:14px">โดย ${who}</div></div><span class="t">${fmtTime(h.changed_at)}</span></li>`;
+}
+
+/* =====================================================================
+   USERS (ADMIN)
+   ===================================================================== */
+async function pageUsers(el) {
+  el.innerHTML = `
+    <div class="page-head"><div><h1>จัดการผู้ใช้</h1><div class="sub">อนุมัติพนักงานใหม่ และกำหนดฝ่าย · ฝ่าย DAC/BLC แก้ไขได้เฉพาะงานคลังตัวเอง · ฝ่ายอื่นดูอย่างเดียว</div></div>
+    <button class="btn btn-ghost btn-sm" id="rf">รีเฟรช</button></div>
+    <div class="card panel" id="ul"><div class="empty">กำลังโหลด...</div></div>`;
+  document.getElementById('rf').onclick = () => pageUsers(el);
+  const { data, error } = await sb.from('profiles').select('*').order('active').order('created_at', { ascending: false });
+  if (error) { document.getElementById('ul').innerHTML = `<div class="err">${esc(thError(error))}</div>`; return; }
+  const pend = data.filter(u => !u.active).length;
+  const opt = (map, v) => Object.entries(map).map(([k, t]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${t}</option>`).join('');
+  document.getElementById('ul').innerHTML = `
+    ${pend ? `<div class="ok" style="background:var(--amber-soft);color:#8a5600">มีผู้ใช้รออนุมัติ ${pend} คน · เลือกฝ่ายแล้วกด "อนุมัติ"</div>` : ''}
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>อีเมล</th><th>ชื่อที่แสดง</th><th>ฝ่าย</th><th>สิทธิ์</th><th>สถานะ</th><th></th></tr></thead><tbody>
+    ${data.map(u => `<tr class="${u.active ? '' : 'pend'}" data-id="${u.id}">
+      <td data-l="อีเมล"><b>${esc(u.email)}</b><div style="font-size:13px;color:var(--muted)">สมัคร ${fmtTime(u.created_at)}</div></td>
+      <td data-l="ชื่อที่แสดง"><input class="inp" name="n" value="${esc(u.display_name || '')}"></td>
+      <td data-l="ฝ่าย"><select class="inp" name="d">${opt(DEPTS, u.department)}</select></td>
+      <td data-l="สิทธิ์"><select class="inp" name="r">${opt({ STAFF: 'พนักงาน', ADMIN: 'ผู้ดูแลระบบ' }, u.role)}</select></td>
+      <td data-l="สถานะ">${u.active ? '<span class="badge s-DEPARTED">ใช้งานได้</span>' : '<span class="badge w-PENDING">รออนุมัติ</span>'}</td>
+      <td><div style="display:flex;gap:8px;flex-wrap:wrap">${u.active
+        ? `<button class="btn btn-primary btn-sm" data-a="save">บันทึก</button> ${u.id === S.profile.id ? '' : '<button class="btn btn-ghost btn-sm" data-a="off">ระงับ</button>'}`
+        : `<button class="btn btn-green btn-sm" data-a="approve">อนุมัติ</button>`}</div></td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+  el.querySelectorAll('tr[data-id] button').forEach(b => b.onclick = async () => {
+    const tr = b.closest('tr');
+    const d = tr.querySelector('[name=d]').value, act = b.dataset.a;
+    if (act === 'approve' && d === 'OTHER' && !confirm('ยังไม่ได้เลือกฝ่าย ผู้ใช้จะดูได้อย่างเดียว ต้องการอนุมัติต่อหรือไม่?')) return;
+    if (act === 'off' && !confirm('ระงับผู้ใช้นี้? เขาจะเข้าระบบได้แต่ไม่เห็นข้อมูล')) return;
+    busy(b, true, '');
+    const { error } = await sb.rpc('admin_set_user', {
+      p_user: tr.dataset.id, p_department: d, p_role: tr.querySelector('[name=r]').value,
+      p_active: act !== 'off', p_display_name: tr.querySelector('[name=n]').value.trim()
+    });
+    if (error) { busy(b, false); return toast(thError(error), true); }
+    toast(act === 'approve' ? 'อนุมัติเรียบร้อย' : act === 'off' ? 'ระงับผู้ใช้แล้ว' : 'บันทึกเรียบร้อย');
+    if (tr.dataset.id === S.profile.id) { await loadProfile(); renderShell(); location.hash = '#users'; return; }
+    pageUsers(el);
+  });
+}
+
+/* =====================================================================
+   SETTINGS
+   ===================================================================== */
+function pageSettings(el) {
+  const p = S.profile;
+  el.innerHTML = `
+    <div class="page-head"><div><h1>ตั้งค่า</h1><div class="sub">ข้อมูลส่วนตัวและรหัสผ่าน</div></div></div>
+    <div class="settings">
+      <div class="card panel"><h3>โปรไฟล์ของฉัน</h3>
+        <p style="margin:0 0 14px;color:var(--muted)">${esc(p.email)}<br>ฝ่าย: <b style="color:var(--navy)">${esc(DEPTS[p.department] || p.department)}</b> · สิทธิ์: <b style="color:var(--navy)">${p.role === 'ADMIN' ? 'ผู้ดูแลระบบ' : 'พนักงาน'}</b>
+        ${canEdit() ? '' : '<br><span class="badge s-WAITING" style="margin-top:6px">ดูข้อมูลอย่างเดียว</span>'}</p>
+        <form id="nf"><label class="field"><span>ชื่อที่แสดงในระบบ</span><input class="inp" name="n" value="${esc(p.display_name || '')}" required></label>
+        <button class="btn btn-primary">บันทึกชื่อ</button></form></div>
+      <div class="card panel"><h3>เปลี่ยนรหัสผ่าน</h3>
+        <form id="pf"><label class="field"><span>รหัสผ่านใหม่</span><input class="inp" type="password" name="a" minlength="8" required autocomplete="new-password"></label>
+        <label class="field"><span>ยืนยันรหัสผ่านใหม่</span><input class="inp" type="password" name="b" minlength="8" required autocomplete="new-password"></label>
+        <button class="btn btn-primary">เปลี่ยนรหัสผ่าน</button></form></div>
+      <div class="card panel"><h3>เกี่ยวกับระบบ</h3>
+        <p style="margin:0;line-height:1.8"><b style="color:var(--navy)">NIPPON SHIPMENT TRACKING</b><br>เวอร์ชัน ${CFG.version}<br>ระบบติดตามงานและ Shipment คลัง DAC · BLC<br>Developed by <b style="color:var(--navy)">${esc(CFG.credit)}</b></p>
+        <button class="btn btn-ghost" style="margin-top:16px" id="lo2">${ico('logout', 20)} ออกจากระบบ</button></div>
+    </div>`;
+  document.getElementById('lo2').onclick = logout;
+  document.getElementById('nf').onsubmit = async ev => {
+    ev.preventDefault();
+    const b = ev.target.querySelector('button'); busy(b, true);
+    const { error } = await sb.rpc('set_my_name', { p_display_name: ev.target.n.value.trim() });
+    busy(b, false);
+    if (error) return toast(thError(error), true);
+    await loadProfile(); toast('บันทึกชื่อแล้ว'); renderShell(); location.hash = '#settings';
+  };
+  document.getElementById('pf').onsubmit = async ev => {
+    ev.preventDefault();
+    const f = ev.target;
+    if (f.a.value !== f.b.value) return toast('รหัสผ่านทั้งสองช่องไม่ตรงกัน', true);
+    const b = f.querySelector('button'); busy(b, true);
+    const { error } = await sb.auth.updateUser({ password: f.a.value });
+    busy(b, false);
+    if (error) return toast(thError(error), true);
+    f.reset(); toast('เปลี่ยนรหัสผ่านเรียบร้อย');
+  };
+}
+
+/* =====================================================================
+   PAGES NOT BUILT YET
+   ===================================================================== */
+function pageSoon(el, pg) {
+  el.innerHTML = `
+    <div class="page-head"><div><h1>${esc(pg.th)}</h1></div></div>
+    <div class="card soon-card">${ico(pg.icon, 44)}
+      <h2>หน้านี้อยู่ในขั้นถัดไปของการสร้างระบบ</h2>
+      <p style="color:var(--muted);margin:0">ฐานข้อมูลและสิทธิ์ของหน้านี้พร้อมแล้ว เหลือสร้างหน้าจอ</p></div>`;
+}
+
+
+/* =====================================================================
+   WORK PAGES · board / assign / detail / trucks / import / history
+   ===================================================================== */
+const myWh = () => (S.profile && S.profile.active ? S.profile.warehouse : null);
+const canEditShip = s => !!s && (isAdmin() || (myWh() && s.warehouse === myWh()));
+const canAssign = () => isAdmin() || !!myWh();
+const fmtEtd = t => t ? new Date(t).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+const fmtN = (v, dp = 2) => (v === null || v === undefined || v === '') ? '-' : Number(v).toLocaleString('en-US', { maximumFractionDigits: dp });
+const toInput = iso => { if (!iso) return ''; const d = new Date(iso); const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+const fromInput = v => v ? new Date(v).toISOString() : null;
+const whBadge = w => `<span class="badge w-${esc(w)}">${w === 'UNASSIGNED' ? 'UNASSIGNED' : esc(w)}</span>`;
+const stBadge = s => `<span class="badge s-${esc(s)}">${esc(s)}</span>`;
+const cleanQ = q => String(q || '').replace(/[,()"*%\\:]/g, ' ').trim();
+
+async function fetchAll(build, max = 5000) {
+  const out = [];
+  for (let from = 0; from < max; from += 1000) {
+    const { data, error } = await build().range(from, from + 999);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  return out;
+}
+
+/* =====================================================================
+   BOARD (งานทั้งหมด / จัดสรรคลัง)
+   ===================================================================== */
+const BF_DEFAULT = { scope: 'open', wh: 'ALL', st: 'ALL', sheet: 'ALL', q: '' };
+S.bf = { ...BF_DEFAULT };
+S.sel = new Set();
+S.rows = [];
+
+function pageBoard(el) {
+  const isAssign = S.page === 'assign';
+  if (isAssign) S.bf = { ...BF_DEFAULT, scope: 'all', wh: 'UNASSIGNED' };
+  else if (S.bfFromAssign) S.bf = { ...BF_DEFAULT };
+  S.bfFromAssign = isAssign;
+  S.sel.clear();
+  const f = S.bf;
+  const chip = (k, v, label) => `<button class="chip" data-k="${k}" data-v="${v}">${label}</button>`;
+  el.innerHTML = `
+    <div class="page-head"><div><h1>${isAssign ? 'จัดสรรคลัง' : 'งานทั้งหมด'}</h1>
+      <div class="sub">${isAssign
+        ? 'เลือก HAWB ที่เป็นงานของคลังคุณ (ติ๊กหัว MAWB เพื่อเลือกทั้งชุด) แล้วกดรับงานที่แถบด้านล่าง'
+        : 'จัดกลุ่ม Flight → MAWB → HAWB · แตะรายการเพื่อดูรายละเอียดและอัปเดตสถานะ'} · <span class="live">อัปเดตอัตโนมัติ</span></div></div></div>
+    <section class="card controls">
+      <div class="search"><input class="inp big" id="q" type="search" placeholder="ค้นหา HAWB / MAWB / Flight / ลูกค้า" value="${esc(f.q)}" autocomplete="off"></div>
+      <div class="chips"><span class="lab">ช่วงงาน</span>${chip('scope', 'open', 'งานที่ยังไม่ออก')}${chip('scope', 'today', 'ETD วันนี้')}${chip('scope', 'tomorrow', 'ETD พรุ่งนี้')}${chip('scope', 'all', 'ทั้งหมด')}</div>
+      <div class="chips"><span class="lab">คลัง</span>${chip('wh', 'ALL', 'ทุกคลัง')}${myWh() ? chip('wh', 'MINE', 'งานของฉัน (' + myWh() + ')') : ''}${chip('wh', 'UNASSIGNED', 'ยังไม่จัดคลัง')}${chip('wh', 'DAC', 'DAC')}${chip('wh', 'BLC', 'BLC')}</div>
+      <div class="chips"><span class="lab">สถานะ</span>${chip('st', 'ALL', 'ทั้งหมด')}${Object.keys(STATUS).map(k => chip('st', k, k)).join('')}</div>
+      <div class="chips"><span class="lab">แพลน</span>${chip('sheet', 'ALL', 'ทั้ง 2 ชีต')}${chip('sheet', 'DMK', 'DMK')}${chip('sheet', 'BKK-SUVARNABHUMI', 'BKK-SUVARNABHUMI')}</div>
+    </section>
+    <div id="blist"><div class="empty">กำลังโหลด...</div></div>
+    <div id="actbar"></div>`;
+  const syncChips = () => el.querySelectorAll('.controls .chip').forEach(c => c.classList.toggle('on', S.bf[c.dataset.k] === c.dataset.v));
+  syncChips();
+  el.querySelectorAll('.controls .chip').forEach(c => c.onclick = () => { S.bf[c.dataset.k] = c.dataset.v; syncChips(); loadBoard(); });
+  let tq;
+  el.querySelector('#q').oninput = e => { clearTimeout(tq); tq = setTimeout(() => { S.bf.q = e.target.value; loadBoard(); }, 350); };
+  el.querySelector('#blist').addEventListener('click', boardClick);
+  el.querySelector('#blist').addEventListener('change', boardChange);
+  loadBoard();
+}
+
+async function loadBoard() {
+  const box = document.getElementById('blist');
+  if (!box) return;
+  S.boardStale = false;
+  const f = S.bf, q = cleanQ(f.q);
+  const build = () => {
+    let x = sb.from('shipment_view').select('id,hawb,mawb,flight,customer,destination,pcs,pcs_loaded,warehouse,status,current_holder,etd,source_sheet,truck_count,remark');
+    if (q) {
+      const plain = q.replace(/\s+/g, '*');
+      const alnum = q.replace(/[^0-9A-Za-z]/g, '');
+      const fuzzy = alnum.length >= 4 ? alnum.split('').join('*') : plain;
+      x = x.or(`hawb.ilike.*${fuzzy}*,mawb.ilike.*${fuzzy}*,flight.ilike.*${plain}*,customer.ilike.*${plain}*,destination.ilike.*${plain}*`);
+    } else if (f.scope === 'open') x = x.neq('status', 'DEPARTED');
+    else if (f.scope === 'today') x = x.gte('etd', bkkDay(0) + 'T00:00:00+07:00').lt('etd', bkkDay(1) + 'T00:00:00+07:00');
+    else if (f.scope === 'tomorrow') x = x.gte('etd', bkkDay(1) + 'T00:00:00+07:00').lt('etd', bkkDay(2) + 'T00:00:00+07:00');
+    if (f.wh === 'MINE') x = x.eq('warehouse', myWh() || '-');
+    else if (f.wh !== 'ALL') x = x.eq('warehouse', f.wh);
+    if (f.st !== 'ALL') x = x.eq('status', f.st);
+    if (f.sheet !== 'ALL') x = x.eq('source_sheet', f.sheet);
+    return x.order('etd', { ascending: true, nullsFirst: false }).order('flight').order('mawb').order('hawb');
+  };
+  try { S.rows = await fetchAll(build); }
+  catch (e) { box.innerHTML = `<div class="err">โหลดข้อมูลไม่ได้: ${esc(thError(e))}</div>`; return; }
+  const ids = new Set(S.rows.map(r => r.id));
+  [...S.sel].forEach(id => { if (!ids.has(id)) S.sel.delete(id); });
+  renderBoard();
+}
+
+function renderBoard() {
+  const box = document.getElementById('blist');
+  if (!box) return;
+  const rows = S.rows;
+  if (!rows.length) {
+    box.innerHTML = `<div class="card empty-big"><h2>${S.bf.q ? 'ไม่พบรายการที่ค้นหา' : 'ไม่มีงานตามเงื่อนไขนี้'}</h2>
+      <p>${S.bf.q ? 'ลองพิมพ์เฉพาะตัวเลขท้าย HAWB หรือ MAWB' : 'ลองเลือก "ทั้งหมด" หรือนำเข้าแพลน Excel ก่อน'}</p>
+      ${canEdit() ? '<a class="btn btn-primary" href="#import">นำเข้าแพลน Excel</a>' : ''}</div>`;
+    renderActbar(); return;
+  }
+  const fl = new Map();
+  for (const s of rows) {
+    const fk = s.flight || '(ไม่ระบุ FLIGHT)';
+    if (!fl.has(fk)) fl.set(fk, new Map());
+    const mm = fl.get(fk), mk = s.mawb || '(ไม่ระบุ MAWB)';
+    if (!mm.has(mk)) mm.set(mk, []);
+    mm.get(mk).push(s);
+  }
+  const sel = canAssign();
+  let h = `<div class="muted-line">พบ <b>${num(rows.length)}</b> HAWB ใน <b>${num(fl.size)}</b> เที่ยวบิน${rows.length >= 5000 ? ' (แสดง 5,000 รายการแรก กรุณากรองเพิ่ม)' : ''}</div>`;
+  for (const [fk, mm] of fl) {
+    const items = [...mm.values()].flat();
+    const tp = items.reduce((a, s) => a + (s.pcs || 0), 0), tl = items.reduce((a, s) => a + (s.pcs_loaded || 0), 0);
+    const etd = items.find(s => s.etd)?.etd;
+    const dest = [...new Set(items.map(s => s.destination).filter(Boolean))].join(', ');
+    h += `<section class="card flight"><div class="fhead"><span class="ftag">FLIGHT</span><span class="fcode">${esc(fk)}</span>
+      ${etd ? `<span class="fetd">ETD ${fmtEtd(etd)}</span>` : ''}${dest ? `<span class="fdest">→ ${esc(dest)}</span>` : ''}
+      <span class="fmeta">${mm.size} MAWB · ${items.length} HAWB · โหลด ${num(tl)}/${num(tp)} PCS</span></div>`;
+    for (const [mk, list] of mm) {
+      const allSel = list.every(s => S.sel.has(s.id));
+      h += `<div class="mawb"><div class="mhead">${sel ? `<input type="checkbox" class="cbx" data-selm="${list.map(s => s.id).join(',')}" ${allSel ? 'checked' : ''} aria-label="เลือกทั้ง MAWB">` : ''}
+        <span class="ftag">MAWB</span><span class="mcode">${esc(mk)}</span><span class="fmeta">${list.length} HAWB</span></div>`;
+      for (const s of list) {
+        const pct = s.pcs ? Math.min(100, (s.pcs_loaded || 0) / s.pcs * 100) : 0;
+        h += `<div class="hrow ${S.sel.has(s.id) ? 'sel' : ''}" data-open="${s.id}">
+          ${sel ? `<input type="checkbox" class="cbx" data-sel="${s.id}" ${S.sel.has(s.id) ? 'checked' : ''} aria-label="เลือก ${esc(s.hawb)}">` : '<span></span>'}
+          <div class="h-main"><div class="hawb">${esc(s.hawb)}</div><div class="cust">${esc(s.customer || '-')}${s.current_holder ? ' · อยู่กับ <b>' + esc(s.current_holder) + '</b>' : ''}</div></div>
+          <div class="h-dest"><span class="k">DEST</span>${esc(s.destination || '-')}</div>
+          <div class="h-pcs"><span class="k">PCS โหลดแล้ว</span>${num(s.pcs_loaded || 0)} / ${num(s.pcs || 0)}<div class="mbar"><i style="width:${pct}%"></i></div></div>
+          <div class="h-wh">${whBadge(s.warehouse)}</div>
+          <div class="h-st">${stBadge(s.status)}</div>
+        </div>`;
+      }
+      h += `</div>`;
+    }
+    h += `</section>`;
+  }
+  box.innerHTML = h;
+  renderActbar();
+}
+
+function boardClick(e) {
+  if (e.target.closest('input')) return;
+  const r = e.target.closest('[data-open]');
+  if (r) openDrawer(+r.dataset.open);
+}
+function boardChange(e) {
+  const t = e.target;
+  if (t.dataset.sel) { t.checked ? S.sel.add(+t.dataset.sel) : S.sel.delete(+t.dataset.sel); t.closest('.hrow').classList.toggle('sel', t.checked); }
+  else if (t.dataset.selm) { t.dataset.selm.split(',').forEach(id => t.checked ? S.sel.add(+id) : S.sel.delete(+id)); renderBoard(); return; }
+  const m = t.closest('.mawb');
+  if (m) { const all = [...m.querySelectorAll('[data-sel]')].every(c => c.checked); const mc = m.querySelector('[data-selm]'); if (mc) mc.checked = all; }
+  renderActbar();
+}
+
+function renderActbar() {
+  const bar = document.getElementById('actbar');
+  if (!bar) return;
+  if (!S.sel.size || !canAssign()) { bar.innerHTML = ''; return; }
+  const wh = myWh();
+  const btns = isAdmin()
+    ? `<button class="btn to-DAC" data-to="DAC">กำหนดเป็น DAC</button><button class="btn to-BLC" data-to="BLC">กำหนดเป็น BLC</button>`
+    : `<button class="btn to-${wh}" data-to="${wh}">รับเป็นงาน ${wh}</button>`;
+  bar.innerHTML = `<div class="actbar"><span class="cnt">เลือกแล้ว ${num(S.sel.size)} HAWB</span>${btns}
+    <button class="btn to-UN" data-to="UNASSIGNED">คืนเป็น UNASSIGNED</button><button class="btn btn-ghost" data-to="">ยกเลิก</button></div>`;
+  bar.querySelectorAll('button').forEach(b => b.onclick = () => b.dataset.to ? doAssign([...S.sel], b.dataset.to, b) : (S.sel.clear(), renderBoard()));
+}
+
+async function doAssign(ids, to, btn) {
+  busy(btn, true, 'กำลังบันทึก...');
+  const { data, error } = await sb.rpc('assign_warehouse', { p_ids: ids, p_warehouse: to });
+  busy(btn, false);
+  if (error) return toast(thError(error), true);
+  const sk = data.skipped || [];
+  toast(`${to === 'UNASSIGNED' ? 'คืนงาน' : 'กำหนดเป็น ' + to} สำเร็จ ${data.assigned} รายการ${sk.length ? ' · ข้าม ' + sk.length : ''}`, !data.assigned && sk.length);
+  if (sk.length) showModal('รายการที่ข้าม', `<p>รายการเหล่านี้กำหนดไม่ได้ เพราะเป็นงานของคลังอื่นหรือมีการบันทึกรถแล้ว</p>
+    <ul class="list">${sk.map(x => `<li><b>${esc(x.hawb)}</b><span style="margin-left:auto;color:var(--muted)">${esc(x.reason)}</span></li>`).join('')}</ul>`);
+  S.sel.clear();
+  if (S.openId) loadDrawer();
+  if (document.getElementById('blist')) loadBoard();
+}
+
+function showModal(title, html) {
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.innerHTML = `<div class="card modal"><h3>${esc(title)}</h3><div class="modal-body">${html}</div><div style="text-align:right;margin-top:14px"><button class="btn btn-primary">ปิด</button></div></div>`;
+  m.onclick = e => { if (e.target === m || e.target.closest('button')) m.remove(); };
+  document.body.appendChild(m);
+}
+
+/* =====================================================================
+   DETAIL DRAWER (รายละเอียด HAWB)
+   ===================================================================== */
+function openDrawer(id) {
+  S.openId = id;
+  let d = document.getElementById('drawer');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'drawer';
+    d.className = 'drawer-bg';
+    d.innerHTML = '<aside class="drawer"><div class="empty">กำลังโหลด...</div></aside>';
+    d.addEventListener('click', e => { if (e.target === d) closeDrawer(); });
+    document.body.appendChild(d);
+    document.body.style.overflow = 'hidden';
+  }
+  loadDrawer();
+}
+function closeDrawer(silent) {
+  const d = document.getElementById('drawer');
+  if (d) d.remove();
+  document.body.style.overflow = '';
+  const was = S.openId;
+  S.openId = null;
+  if (!silent && was && S.boardStale && document.getElementById('blist')) loadBoard();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.openId) closeDrawer(); });
+
+async function loadDrawer() {
+  const id = S.openId;
+  if (!id) return;
+  const [s, t, h] = await Promise.all([
+    sb.from('shipment_view').select('*').eq('id', id).maybeSingle(),
+    sb.from('trucks').select('*').eq('shipment_id', id).order('created_at'),
+    sb.from('history').select('*').eq('shipment_id', id).order('changed_at', { ascending: false }).limit(100)
+  ]);
+  if (S.openId !== id) return;
+  const box = document.querySelector('#drawer .drawer');
+  if (!box) return;
+  if (s.error || !s.data) { box.innerHTML = `<div class="err" style="margin:20px">${esc(s.error ? thError(s.error) : 'ไม่พบ HAWB นี้')}</div>`; return; }
+  S.cur = s.data; S.curTrucks = t.data || [];
+  renderDrawer(box, s.data, S.curTrucks, h.data || []);
+}
+
+function renderDrawer(box, s, trucks, hist) {
+  const ed = canEditShip(s);
+  const loaded = trucks.reduce((a, x) => a + (x.pcs_loaded || 0), 0), tot = s.pcs || 0, rem = tot - loaded;
+  const kv = (k, v, cls = '') => `<div class="kv ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const scroll = box.scrollTop;
+  let h = `<div class="dhead"><div style="min-width:0"><div class="k">HAWB</div><div class="dtitle">${esc(s.hawb)}</div></div>
+      ${whBadge(s.warehouse)} ${stBadge(s.status)}<button class="btn btn-ghost btn-sm" id="dclose" style="margin-left:auto">ปิด ✕</button></div><div class="dbody">`;
+  if (s.warehouse === 'UNASSIGNED') {
+    h += canAssign()
+      ? `<div class="note-box">ยังไม่มีคลังรับผิดชอบงานนี้<div class="row-btns">${isAdmin()
+          ? '<button class="btn to-DAC" data-take="DAC">กำหนดเป็น DAC</button><button class="btn to-BLC" data-take="BLC">กำหนดเป็น BLC</button>'
+          : `<button class="btn to-${myWh()}" data-take="${myWh()}">รับเป็นงาน ${myWh()}</button>`}</div></div>`
+      : `<div class="note-box">ยังไม่มีคลังรับผิดชอบงานนี้</div>`;
+  } else if (!ed) h += `<div class="note-box">งานนี้เป็นของคลัง <b>${esc(s.warehouse)}</b> · คุณดูได้อย่างเดียว</div>`;
+  else if (!trucks.length) h += `<div style="text-align:right"><button class="btn btn-ghost btn-sm" data-take="UNASSIGNED">คืนงานเป็น UNASSIGNED</button></div>`;
+
+  h += `<section class="dcard"><h3>สถานะ</h3><div class="stbtns">${Object.entries(STATUS).map(([k, v]) =>
+      `<button class="stbtn s-${k} ${s.status === k ? 'on' : ''}" data-st="${k}" ${ed ? '' : 'disabled'}>${k}<small>${v.th}</small></button>`).join('')}</div>
+    ${(s.status === 'ISSUE' || s.issue_note) ? `<label class="field" style="margin:14px 0 0"><span>รายละเอียดปัญหา</span><textarea class="inp" id="dissue" rows="2" ${ed ? '' : 'disabled'}>${esc(s.issue_note || '')}</textarea></label>${ed ? '<button class="btn btn-primary btn-sm" id="dissuesave" style="margin-top:8px">บันทึกรายละเอียดปัญหา</button>' : ''}` : ''}
+  </section>`;
+
+  h += `<section class="dcard"><h3>ผู้รับผิดชอบ / อยู่กับใคร</h3><div class="grid-2">
+      <label class="field"><span>ผู้รับผิดชอบ</span><input class="inp" id="dstaff" value="${esc(s.assigned_staff || '')}" placeholder="ชื่อพนักงาน" ${ed ? '' : 'disabled'}></label>
+      <label class="field"><span>สินค้า/เอกสารอยู่กับใคร</span><input class="inp" id="dholder" value="${esc(s.current_holder || '')}" placeholder="เช่น คุณสมชาย / โซน B3" ${ed ? '' : 'disabled'}></label></div>
+      ${ed ? '<button class="btn btn-primary btn-sm" id="dwho">บันทึก</button>' : ''}</section>`;
+
+  h += `<section class="dcard"><h3>รถและการโหลด</h3>
+    <div class="prog-line"><span>โหลดแล้ว <b>${num(loaded)}</b> / ${num(tot)} PCS</span><span>คงเหลือ <b style="color:${rem < 0 ? 'var(--red)' : rem === 0 && tot ? 'var(--green)' : 'var(--navy)'}">${num(rem)}</b> PCS</span></div>
+    <div class="mbar big"><i style="width:${tot ? Math.min(100, loaded / tot * 100) : 0}%"></i></div>`;
+  trucks.forEach((v, i) => {
+    const stamp = (k, label) => `<label class="stamp"><span>${label}</span><div class="sline"><input class="inp" type="datetime-local" data-tid="${v.id}" data-f="${k}" value="${toInput(v[k])}" ${ed ? '' : 'disabled'}>${ed ? `<button class="btn btn-ghost btn-sm" data-now="${k}" data-tid="${v.id}">ตอนนี้</button>` : ''}</div></label>`;
+    h += `<div class="truck"><div class="truck-top"><span class="tno">คันที่ ${i + 1}</span>
+        ${ed ? `<input class="inp plate" data-tid="${v.id}" data-f="truck_plate" value="${esc(v.truck_plate)}" aria-label="ทะเบียน">` : `<span class="plate">${esc(v.truck_plate)}</span>`}
+        ${ed ? `<input class="inp" style="max-width:190px" data-tid="${v.id}" data-f="driver_name" value="${esc(v.driver_name || '')}" placeholder="ชื่อคนขับ">` : `<span>${esc(v.driver_name || '')}</span>`}
+        ${ed ? `<label class="pcs-in"><input class="inp" type="number" min="1" data-tid="${v.id}" data-f="pcs_loaded" value="${v.pcs_loaded}"> PCS</label>` : `<b>${num(v.pcs_loaded)} PCS</b>`}
+        ${ed ? `<button class="btn btn-ghost btn-sm del" data-del="${v.id}">ลบ</button>` : ''}</div>
+      <div class="stamps">${stamp('arrived_at', 'รถมาถึง')}${stamp('load_start_at', 'เริ่มโหลด')}${stamp('departed_at', 'ออกจากคลัง')}</div></div>`;
+  });
+  if (!trucks.length) h += `<div class="muted-line">ยังไม่มีรถสำหรับ HAWB นี้</div>`;
+  if (ed) h += `<div class="truck add"><div class="grid-3">
+      <label class="field"><span>ทะเบียนรถ</span><input class="inp" id="nplate" placeholder="เช่น 70-1234"></label>
+      <label class="field"><span>ชื่อคนขับ</span><input class="inp" id="ndriver"></label>
+      <label class="field"><span>PCS คันนี้</span><input class="inp" id="npcs" type="number" min="1" value="${rem > 0 ? rem : ''}"></label></div>
+      <button class="btn btn-primary" id="nadd">+ เพิ่มรถ</button></div>`;
+  h += `</section>`;
+
+  h += `<section class="dcard"><h3>ข้อมูลจากแพลน</h3><div class="kvgrid">
+    ${kv('ลูกค้า (SHIPPER)', esc(s.customer || '-'), 'wide')}${kv('FLIGHT', esc(s.flight || '-'))}${kv('MAWB', esc(s.mawb || '-'))}
+    ${kv('ETD', fmtEtd(s.etd))}${kv('DEST', esc(s.destination || '-'))}${kv('PCS', num(s.pcs))}
+    ${kv('G/W (KGS)', fmtN(s.gross_weight))}${kv('VL.WT.', fmtN(s.volume_weight))}${kv('CBM', fmtN(s.cbm, 3))}
+    ${kv('รับสินค้า (CGO P/U)', esc(s.pickup || '-'))}${kv('Cut-off', esc(s.cut_off || '-'))}${kv('PRIO / BKG', esc([s.priority, s.booking].filter(Boolean).join(' / ') || '-'))}
+    ${kv('แพลน', esc((s.source_sheet || '-') + (s.plan_round ? ' · รอบ' + s.plan_round : '')))}
+    ${s.remark ? kv('REMARK', esc(s.remark), 'wide') : ''}</div></section>`;
+
+  h += `<section class="dcard"><h3>ประวัติการเปลี่ยนแปลง</h3>${hist.length ? `<ul class="list">${hist.map(actLine).join('')}</ul>` : '<div class="muted-line">ยังไม่มีประวัติ</div>'}</section>`;
+  h += `</div>`;
+  box.innerHTML = h;
+  box.scrollTop = scroll;
+  wireDrawer(box, s);
+}
+
+function wireDrawer(box, s) {
+  box.querySelector('#dclose').onclick = () => closeDrawer();
+  box.querySelectorAll('[data-take]').forEach(b => b.onclick = () => doAssign([s.id], b.dataset.take, b));
+  box.querySelectorAll('[data-st]').forEach(b => b.onclick = async () => {
+    if (b.dataset.st === s.status) return;
+    let note = null;
+    if (b.dataset.st === 'ISSUE') { note = prompt('รายละเอียดปัญหา (เช่น เอกสารไม่ครบ / สินค้าเสียหาย)', s.issue_note || ''); if (note === null) return; }
+    await updShip(s, { p_status: b.dataset.st, p_issue_note: note });
+  });
+  const iss = box.querySelector('#dissuesave');
+  if (iss) iss.onclick = () => updShip(s, { p_issue_note: box.querySelector('#dissue').value });
+  const who = box.querySelector('#dwho');
+  if (who) who.onclick = () => updShip(s, { p_assigned_staff: box.querySelector('#dstaff').value.trim(), p_current_holder: box.querySelector('#dholder').value.trim() }, 'บันทึกแล้ว');
+  box.querySelectorAll('input[data-tid][data-f]').forEach(inp => inp.onchange = () => {
+    let v = inp.value;
+    if (inp.type === 'datetime-local') v = fromInput(v);
+    else if (inp.dataset.f === 'pcs_loaded') v = parseInt(v, 10) || 0;
+    else v = v.trim();
+    updTruck(+inp.dataset.tid, inp.dataset.f, v);
+  });
+  box.querySelectorAll('[data-now]').forEach(b => b.onclick = () => updTruck(+b.dataset.tid, b.dataset.now, new Date().toISOString()));
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+    if (!confirm('ลบรถคันนี้?')) return;
+    const { error } = await sb.from('trucks').delete().eq('id', +b.dataset.del);
+    if (error) return toast(thError(error), true);
+    toast('ลบรถแล้ว'); loadDrawer();
+  });
+  const add = box.querySelector('#nadd');
+  if (add) add.onclick = async () => {
+    const plate = box.querySelector('#nplate').value.trim(), pcs = parseInt(box.querySelector('#npcs').value, 10);
+    if (!plate) return toast('กรุณาใส่ทะเบียนรถ', true);
+    if (!(pcs > 0)) return toast('กรุณาใส่จำนวน PCS ของรถคันนี้', true);
+    busy(add, true, 'กำลังเพิ่ม...');
+    const { error } = await sb.from('trucks').insert({ shipment_id: s.id, warehouse: s.warehouse, truck_plate: plate, driver_name: box.querySelector('#ndriver').value.trim() || null, pcs_loaded: pcs });
+    busy(add, false);
+    if (error) return toast(thError(error), true);
+    toast('เพิ่มรถแล้ว'); loadDrawer();
+  };
+}
+
+async function updShip(s, args, okMsg) {
+  const { error } = await sb.rpc('update_shipment', { p_id: s.id, p_status: null, p_assigned_staff: null, p_current_holder: null, p_issue_note: null, ...args });
+  if (error) { toast(thError(error), true); return false; }
+  toast(okMsg || (args.p_status ? 'เปลี่ยนสถานะเป็น ' + args.p_status : 'บันทึกแล้ว'));
+  await loadDrawer();
+  if (!S.openId && document.getElementById('blist')) loadBoard();
+  S.boardStale = true;
+  return true;
+}
+
+async function updTruck(tid, field, value) {
+  const { error } = await sb.from('trucks').update({ [field]: value }).eq('id', tid);
+  if (error) { toast(thError(error), true); return loadDrawer(); }
+  S.boardStale = true;
+  // เปลี่ยนสถานะให้อัตโนมัติตามเวลารถ
+  const s = S.cur;
+  if (s && value && canEditShip(s)) {
+    const { data: tr } = await sb.from('trucks').select('pcs_loaded,departed_at').eq('shipment_id', s.id);
+    let next = null;
+    if (field === 'arrived_at' && s.status === 'WAITING') next = 'ARRIVED';
+    else if (field === 'load_start_at' && ['WAITING', 'ARRIVED'].includes(s.status)) next = 'LOADING';
+    else if (field === 'departed_at' && s.status !== 'DEPARTED' && tr && tr.length && tr.every(x => x.departed_at)
+             && tr.reduce((a, x) => a + (x.pcs_loaded || 0), 0) >= (s.pcs || 0)) next = 'DEPARTED';
+    if (next) { await updShip(s, { p_status: next }, `บันทึกเวลาแล้ว · เปลี่ยนสถานะเป็น ${next} อัตโนมัติ`); return; }
+  }
+  toast('บันทึกแล้ว');
+  loadDrawer();
+}
+
+/* =====================================================================
+   TRUCKS (รถและการโหลด)
+   ===================================================================== */
+S.tf = { scope: 'today', wh: 'ALL' };
+function pageTrucks(el) {
+  const chip = (k, v, l) => `<button class="chip" data-k="${k}" data-v="${v}">${l}</button>`;
+  el.innerHTML = `<div class="page-head"><div><h1>รถและการโหลด</h1><div class="sub">รถทุกคันที่บันทึกไว้ · แตะรายการเพื่อเปิดรายละเอียด HAWB · <span class="live">อัปเดตอัตโนมัติ</span></div></div></div>
+    <section class="card controls"><div class="chips"><span class="lab">ช่วงเวลา</span>${chip('scope', 'today', 'บันทึกวันนี้')}${chip('scope', 'notout', 'ยังไม่ออกจากคลัง')}${chip('scope', 'all', 'ทั้งหมด')}</div>
+    <div class="chips"><span class="lab">คลัง</span>${chip('wh', 'ALL', 'ทุกคลัง')}${chip('wh', 'DAC', 'DAC')}${chip('wh', 'BLC', 'BLC')}</div></section>
+    <div class="card panel" id="tlist"><div class="empty">กำลังโหลด...</div></div>`;
+  const sync = () => el.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', S.tf[c.dataset.k] === c.dataset.v));
+  sync();
+  el.querySelectorAll('.chip').forEach(c => c.onclick = () => { S.tf[c.dataset.k] = c.dataset.v; sync(); loadTrucks(); });
+  el.querySelector('#tlist').addEventListener('click', e => { const r = e.target.closest('[data-open]'); if (r) openDrawer(+r.dataset.open); });
+  loadTrucks();
+}
+async function loadTrucks() {
+  const box = document.getElementById('tlist');
+  if (!box) return;
+  let q = sb.from('trucks').select('*, shipments(id,hawb,flight,mawb,customer,status)');
+  if (S.tf.scope === 'today') q = q.gte('created_at', bkkDay(0) + 'T00:00:00+07:00');
+  else if (S.tf.scope === 'notout') q = q.is('departed_at', null);
+  if (S.tf.wh !== 'ALL') q = q.eq('warehouse', S.tf.wh);
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(500);
+  if (error) { box.innerHTML = `<div class="err">${esc(thError(error))}</div>`; return; }
+  if (!data.length) { box.innerHTML = '<div class="empty">ยังไม่มีรถตามเงื่อนไขนี้ · เพิ่มรถได้จากหน้ารายละเอียด HAWB</div>'; return; }
+  box.innerHTML = `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>ทะเบียน</th><th>คนขับ</th><th>HAWB</th><th>Flight</th><th>PCS</th><th>มาถึง</th><th>เริ่มโหลด</th><th>ออก</th><th>คลัง</th></tr></thead><tbody>
+    ${data.map(t => { const s = t.shipments || {}; return `<tr class="click" data-open="${t.shipment_id}">
+      <td data-l="ทะเบียน"><span class="plate">${esc(t.truck_plate)}</span></td><td data-l="คนขับ">${esc(t.driver_name || '-')}</td>
+      <td data-l="HAWB"><b>${esc(s.hawb || '-')}</b><div class="small-muted">${esc(s.customer || '')}</div></td><td data-l="Flight">${esc(s.flight || '-')}</td>
+      <td data-l="PCS"><b>${num(t.pcs_loaded)}</b></td><td data-l="มาถึง">${fmtEtd(t.arrived_at)}</td><td data-l="เริ่มโหลด">${fmtEtd(t.load_start_at)}</td>
+      <td data-l="ออก">${t.departed_at ? fmtEtd(t.departed_at) : '<span class="badge s-LOADING">ยังไม่ออก</span>'}</td><td data-l="คลัง">${whBadge(t.warehouse)}</td></tr>`; }).join('')}
+    </tbody></table></div>`;
+}
+
+/* =====================================================================
+   HISTORY (ประวัติการทำงาน)
+   ===================================================================== */
+S.hf = { type: 'work', day: '', q: '' };
+const HTYPES = { work: ['งานคลัง', ['ASSIGN', 'STATUS', 'HOLDER', 'STAFF', 'TRUCK_ADD', 'TRUCK_EDIT', 'TRUCK_DELETE']],
+  status: ['สถานะ', ['STATUS']], assign: ['จัดคลัง', ['ASSIGN']], truck: ['รถ', ['TRUCK_ADD', 'TRUCK_EDIT', 'TRUCK_DELETE']],
+  plan: ['แพลน', ['IMPORT', 'PLAN_UPDATE', 'PLAN_NEW']], user: ['ผู้ใช้', ['USER']], all: ['ทั้งหมด', null] };
+function pageHistory(el) {
+  el.innerHTML = `<div class="page-head"><div><h1>ประวัติการทำงาน</h1><div class="sub">ใครทำอะไร เมื่อไหร่ · แสดงล่าสุด 300 รายการ</div></div></div>
+    <section class="card controls"><div class="chips"><span class="lab">ประเภท</span>${Object.entries(HTYPES).map(([k, v]) => `<button class="chip" data-k="${k}">${v[0]}</button>`).join('')}</div>
+    <div class="chips"><span class="lab">ค้นหา</span><input class="inp" id="hq" placeholder="HAWB หรืออีเมลผู้ทำ" style="max-width:280px" value="${esc(S.hf.q)}">
+      <input class="inp" id="hday" type="date" style="max-width:190px" value="${S.hf.day}"><button class="btn btn-ghost btn-sm" id="hclr">ล้าง</button></div></section>
+    <div class="card panel"><ul class="list" id="hlist"><li class="empty">กำลังโหลด...</li></ul></div>`;
+  const sync = () => el.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', S.hf.type === c.dataset.k));
+  sync();
+  el.querySelectorAll('.chip').forEach(c => c.onclick = () => { S.hf.type = c.dataset.k; sync(); loadHistory(); });
+  let t;
+  el.querySelector('#hq').oninput = e => { clearTimeout(t); t = setTimeout(() => { S.hf.q = e.target.value; loadHistory(); }, 350); };
+  el.querySelector('#hday').onchange = e => { S.hf.day = e.target.value; loadHistory(); };
+  el.querySelector('#hclr').onclick = () => { S.hf = { type: 'work', day: '', q: '' }; pageHistory(el); };
+  loadHistory();
+}
+async function loadHistory() {
+  const box = document.getElementById('hlist');
+  if (!box) return;
+  let q = sb.from('history').select('*');
+  const types = HTYPES[S.hf.type][1];
+  if (types) q = q.in('action', types);
+  const term = cleanQ(S.hf.q);
+  if (term) { const fz = term.replace(/[^0-9A-Za-z@.]/g, '').split('').join('*'); q = q.or(`hawb.ilike.*${fz}*,changed_by.ilike.*${term.replace(/\s+/g, '*')}*`); }
+  if (S.hf.day) { const nd = new Date(S.hf.day + 'T00:00:00+07:00'); nd.setDate(nd.getDate() + 1);
+    q = q.gte('changed_at', S.hf.day + 'T00:00:00+07:00').lt('changed_at', nd.toISOString()); }
+  const { data, error } = await q.order('changed_at', { ascending: false }).limit(300);
+  if (error) { box.innerHTML = `<li class="err">${esc(thError(error))}</li>`; return; }
+  box.innerHTML = data.length ? data.map(h => actLine(h).replace('<li>', `<li ${h.shipment_id ? `class="click" data-open="${h.shipment_id}"` : ''}>`)).join('') : '<li class="empty">ไม่พบประวัติตามเงื่อนไขนี้</li>';
+  box.onclick = e => { const r = e.target.closest('[data-open]'); if (r) openDrawer(+r.dataset.open); };
+}
+
+/* =====================================================================
+   IMPORT (นำเข้าแพลน Excel)
+   ===================================================================== */
+S.imp = null;
+function defaultRound() { const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: 'numeric', hour12: false }).format(new Date()); return h < 12 ? 'เช้า' : h < 16 ? 'บ่าย' : 'เย็น'; }
+
+function pageImport(el) {
+  if (!canEdit()) { el.innerHTML = '<div class="card soon-card"><h2>เฉพาะพนักงานคลัง DAC / BLC</h2><p>บัญชีของคุณดูข้อมูลได้อย่างเดียว</p></div>'; return; }
+  el.innerHTML = `<div class="page-head"><div><h1>นำเข้าแพลน Excel</h1>
+    <div class="sub">อ่านทั้งชีต DMK และ BKK-SUVARNABHUMI · HAWB ใหม่เข้าเป็น UNASSIGNED · HAWB เดิมอัปเดตเฉพาะข้อมูลแพลน ไม่แตะคลัง สถานะ รถ และประวัติ</div></div></div>
+    <div id="imp"></div>
+    <div class="card panel" style="margin-top:18px"><h3>การนำเข้าล่าสุด</h3><div id="ibatch"><div class="empty">กำลังโหลด...</div></div></div>`;
+  renderImport();
+  loadBatches();
+}
+
+async function loadBatches() {
+  const box = document.getElementById('ibatch');
+  if (!box) return;
+  const { data, error } = await sb.from('import_batches').select('*').order('imported_at', { ascending: false }).limit(10);
+  if (error) { box.innerHTML = `<div class="err">${esc(thError(error))}</div>`; return; }
+  box.innerHTML = data.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>เวลา</th><th>ไฟล์</th><th>รอบ</th><th>ใหม่</th><th>อัปเดต</th><th>ไม่เปลี่ยน</th><th>โดย</th></tr></thead><tbody>
+    ${data.map(b => `<tr><td data-l="เวลา">${fmtTime(b.imported_at)}</td><td data-l="ไฟล์">${esc(b.file_name || '-')}</td><td data-l="รอบ">${esc(b.plan_round || '-')}</td>
+      <td data-l="ใหม่"><b>${num(b.new_count)}</b></td><td data-l="อัปเดต"><b>${num(b.updated_count)}</b></td><td data-l="ไม่เปลี่ยน">${num(b.unchanged_count)}</td><td data-l="โดย">${esc((b.imported_by || '').split('@')[0])}</td></tr>`).join('')}
+    </tbody></table></div>` : '<div class="empty">ยังไม่เคยนำเข้าแพลน</div>';
+}
+
+function renderImport() {
+  const box = document.getElementById('imp');
+  if (!box) return;
+  const I = S.imp;
+  if (!I) {
+    box.innerHTML = `<label class="drop" id="drop"><input type="file" id="ifile" accept=".xlsx,.xlsm" hidden>
+      ${ico('upload', 40)}<b>ลากไฟล์แพลน Excel มาวางที่นี่</b><span>หรือกดเพื่อเลือกไฟล์ .xlsx จากเครื่อง</span><span class="btn btn-primary">เลือกไฟล์</span></label>`;
+    const drop = box.querySelector('#drop');
+    box.querySelector('#ifile').onchange = e => readPlanFile(e.target.files[0]);
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+    drop.ondragleave = () => drop.classList.remove('over');
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); readPlanFile(e.dataTransfer.files[0]); };
+    return;
+  }
+  if (I.loading) { box.innerHTML = `<div class="card panel"><div class="empty">กำลังอ่านไฟล์ ${esc(I.fileName)}...</div></div>`; return; }
+  if (I.result) {
+    const r = I.result;
+    box.innerHTML = `<div class="card panel"><h3>✅ นำเข้าเรียบร้อย · ${esc(I.fileName)}</h3>
+      <div class="istats"><div><b>${num(r.new)}</b><span>HAWB ใหม่</span></div><div><b>${num(r.updated)}</b><span>อัปเดต</span></div><div><b>${num(r.unchanged)}</b><span>ไม่เปลี่ยน</span></div></div>
+      <div class="row-btns"><a class="btn btn-primary" href="#assign">ไปจัดสรรคลัง</a><a class="btn btn-ghost" href="#board">ดูงานทั้งหมด</a><button class="btn btn-ghost" id="inew">นำเข้าไฟล์อื่น</button></div></div>`;
+    box.querySelector('#inew').onclick = () => { S.imp = null; renderImport(); };
+    return;
+  }
+  const P = I.parsed;
+  const bad = P.sheets.filter(s => s.missing.length);
+  let h = `<div class="card panel"><div class="grid-3">
+      <div><div class="k">ไฟล์</div><b style="word-break:break-all">${esc(I.fileName)}</b></div>
+      <label class="field"><span>วันที่ของแพลน</span><input class="inp" type="date" id="idate" value="${esc(I.planDate)}"></label>
+      <label class="field"><span>รอบแพลน</span><select class="inp" id="iround">${['เช้า', 'บ่าย', 'เย็น', 'แพลนแก้ไข', 'อื่นๆ'].map(x => `<option ${I.round === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div>
+    <div class="sheets">${P.sheets.map(s => `<div class="sheetbox ${s.missing.length ? 'bad' : ''}"><b>ชีต ${esc(s.name)}</b>
+      ${s.missing.length ? `<span>หาคอลัมน์ไม่เจอ: ${esc(s.missing.join(', '))}</span>` : `<span><b>${num(s.count)}</b> HAWB</span>`}</div>`).join('')}</div>
+    ${P.dupInFile ? `<div class="warn">พบ HAWB ซ้ำในไฟล์ ${P.dupInFile} รายการ · ระบบใช้แถวล่างสุดของแต่ละ HAWB</div>` : ''}
+    ${bad.length ? `<div class="err">บางชีตอ่านไม่ได้ ตรวจว่าหัวตารางมีคำว่า HAWB NO., MAWB.NO., FLT NO., PCS</div>` : ''}
+    <h3 style="margin-top:18px">ตัวอย่างข้อมูลที่อ่านได้ (${num(P.rows.length)} HAWB)</h3>
+    <div class="tbl-wrap"><table class="tbl small"><thead><tr><th>ชีต</th><th>HAWB</th><th>MAWB</th><th>Flight</th><th>ETD</th><th>ลูกค้า</th><th>PCS</th><th>DEST</th></tr></thead><tbody>
+      ${P.rows.slice(0, 8).map(r => `<tr><td data-l="ชีต">${esc(r.source_sheet === 'DMK' ? 'DMK' : 'BKK')}</td><td data-l="HAWB"><b>${esc(r.hawb)}</b></td><td data-l="MAWB">${esc(r.mawb)}</td><td data-l="Flight">${esc(r.flight)}</td>
+        <td data-l="ETD">${r.etd ? fmtEtd(r.etd) : '-'}</td><td data-l="ลูกค้า">${esc(r.customer)}</td><td data-l="PCS">${num(r.pcs)}</td><td data-l="DEST">${esc(r.destination)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  if (!I.dry) h += `<div class="row-btns"><button class="btn btn-ghost" id="icancel">ยกเลิก</button>
+      <button class="btn btn-primary" id="icheck" ${P.rows.length ? '' : 'disabled'}>ขั้นต่อไป: ตรวจเทียบกับข้อมูลในระบบ</button></div>`;
+  else {
+    const d = I.dry, ups = (d.rows || []).filter(x => x.result === 'UPDATE');
+    const LBL = { mawb: 'MAWB', flight: 'Flight', customer: 'ลูกค้า', pcs: 'PCS', gross_weight: 'G/W', volume_weight: 'VL.WT.', cbm: 'CBM', destination: 'DEST', etd: 'ETD', source_sheet: 'ชีต', pickup: 'CGO P/U', cut_off: 'Cut-off', priority: 'PRIO', booking: 'BKG', remark: 'REMARK' };
+    const show = (k, v) => k === 'etd' ? (v ? fmtEtd(v) : '-') : esc(v ?? '-');
+    h += `<h3 style="margin-top:20px">ผลการตรวจเทียบ</h3>
+      <div class="istats"><div><b>${num(d.new)}</b><span>HAWB ใหม่ (เข้าเป็น UNASSIGNED)</span></div><div><b>${num(d.updated)}</b><span>อัปเดตข้อมูลแพลน</span></div><div><b>${num(d.unchanged)}</b><span>เหมือนเดิม</span></div></div>
+      ${ups.length ? `<details class="changes"><summary>ดูรายการที่เปลี่ยน (${num(ups.length)})</summary><ul class="list">${ups.slice(0, 200).map(u =>
+        `<li><div><b>${esc(u.hawb)}</b><div class="small-muted">${Object.entries(u.changes).map(([k, c]) => `${LBL[k] || k}: ${show(k, c.from)} → <b>${show(k, c.to)}</b>`).join(' · ')}</div></div></li>`).join('')}</ul></details>` : ''}
+      <div class="row-btns"><button class="btn btn-ghost" id="icancel">ยกเลิก</button>
+        <button class="btn btn-green" id="igo" ${d.new + d.updated ? '' : 'disabled'}>${d.new + d.updated ? `ยืนยันนำเข้า ${num(d.new + d.updated)} รายการ` : 'ไม่มีอะไรเปลี่ยน'}</button></div>`;
+  }
+  h += `</div>`;
+  box.innerHTML = h;
+  box.querySelector('#icancel').onclick = () => { S.imp = null; renderImport(); };
+  box.querySelector('#idate').onchange = e => { I.planDate = e.target.value; I.parsed = PLAN.parse(I.sheets, I.planDate); I.dry = null; renderImport(); };
+  box.querySelector('#iround').onchange = e => { I.round = e.target.value; };
+  const chk = box.querySelector('#icheck');
+  if (chk) chk.onclick = async () => {
+    busy(chk, true, 'กำลังตรวจเทียบ...');
+    const { data, error } = await sb.rpc('import_plan', { p_rows: I.parsed.rows, p_file_name: I.fileName, p_plan_round: I.round, p_dry_run: true });
+    if (error) { busy(chk, false); return toast(thError(error), true); }
+    I.dry = data; renderImport();
+  };
+  const go = box.querySelector('#igo');
+  if (go) go.onclick = async () => {
+    busy(go, true, 'กำลังนำเข้า...');
+    const { data, error } = await sb.rpc('import_plan', { p_rows: I.parsed.rows, p_file_name: I.fileName, p_plan_round: I.round, p_dry_run: false });
+    if (error) { busy(go, false); return toast(thError(error), true); }
+    I.result = data; renderImport(); loadBatches();
+    toast(`นำเข้าแล้ว · ใหม่ ${data.new} · อัปเดต ${data.updated}`);
+  };
+}
+
+async function readPlanFile(file) {
+  if (!file) return;
+  if (!/\.xls[xm]$/i.test(file.name)) return toast('รองรับเฉพาะไฟล์ .xlsx · ถ้าเป็น .xls ให้เปิดใน Excel แล้ว Save As เป็น .xlsx', true);
+  S.imp = { fileName: file.name, loading: true };
+  renderImport();
+  try {
+    const sheets = await XL.read(await file.arrayBuffer());
+    const planDate = PLAN.dateFromFileName(file.name) || bkkDay(0);
+    S.imp = { fileName: file.name, sheets, planDate, round: defaultRound(), parsed: PLAN.parse(sheets, planDate), dry: null };
+  } catch (e) {
+    console.error(e);
+    S.imp = null;
+    toast(e.message === 'NOT_XLSX' ? 'ไฟล์นี้ไม่ใช่ .xlsx ที่ถูกต้อง' : 'เปิดไฟล์ไม่ได้: ' + e.message, true);
+  }
+  renderImport();
+}
+
+/* ---------- start ---------- */
+sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT' && S.profile) { S.profile = null; renderLogin(); } });
+boot().catch(e => renderLogin(thError(e)));
+
+</script>
+</body>
+</html>
